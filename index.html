@@ -776,6 +776,20 @@ a.loc:hover { text-decoration: underline; }
 .occ-extra .agenda-box b { display: block; font-size: 12px; color: var(--muted); margin-bottom: 2px; }
 #ask-input { margin-top: -2px; }
 
+/* Attendees */
+.att-box { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; min-height: 42px; padding: 5px 8px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface); cursor: text; }
+.att-box:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--ring); }
+.att-box input { flex: 1; min-width: 110px; border: 0 !important; box-shadow: none !important; padding: 4px 2px; min-height: 30px; background: transparent; }
+.att-chip { display: inline-flex; align-items: center; gap: 2px; padding: 2px 4px 2px 10px; border-radius: 99px; background: var(--accent-soft); color: var(--text); font-size: 13px; font-weight: 500; max-width: 100%; }
+.att-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.att-chip button { border: 0; background: none; color: var(--muted); width: 22px; height: 22px; border-radius: 50%; font-size: 15px; line-height: 1; display: grid; place-items: center; }
+.att-chip button:hover { background: var(--surface); color: var(--danger); }
+.att-sugg { display: flex; flex-wrap: wrap; gap: 6px; }
+.att-sugg:empty { display: none; }
+.att-sugg button { border: 1px dashed var(--border-strong); background: var(--surface); border-radius: 99px; padding: 3px 10px 3px 8px; font-size: 12.5px; color: var(--muted); display: inline-flex; align-items: center; gap: 4px; }
+.att-sugg button:hover { border-style: solid; border-color: var(--accent); color: var(--text); }
+input, textarea, select { scroll-margin-top: 96px; scroll-margin-bottom: 120px; }
+
 /* Each conscience step shows its verse */
 .scale button { align-items: flex-start; padding: 9px 12px; }
 .scale button i { margin-top: 2px; }
@@ -825,6 +839,7 @@ a.loc:hover { text-decoration: underline; }
     <symbol id="i-sprout" viewBox="0 0 24 24"><path d="M12 21v-9"/><path d="M12 12.5c0-4 2.8-6.6 7-6.6 0 4.1-2.8 6.6-7 6.6Z"/><path d="M12 14.5C12 11 9.6 8.6 5.6 8.6c0 3.6 2.5 5.9 6.4 5.9Z"/><path d="M6.5 21h11"/></symbol>
     <symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></symbol>
     <symbol id="i-video" viewBox="0 0 24 24"><path d="m16 13 5.2 3.1a.5.5 0 0 0 .8-.4V8.3a.5.5 0 0 0-.8-.4L16 11"/><rect x="2" y="6" width="14" height="12" rx="2"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
   </defs>
 </svg>
 
@@ -884,9 +899,11 @@ a.loc:hover { text-decoration: underline; }
         <div class="calc hidden" id="f-calc"></div>
         <label class="field"><span>Tag</span><select id="f-tag"></select></label>
         <label class="field hidden" id="f-newtag-wrap"><span>New tag name</span><input type="text" id="f-newtag" placeholder="Name your new tag" autocomplete="off"></label>
+        <div class="field"><span>Attendees <em>· optional</em></span>
+          <div class="att-box" id="f-att-box"><input type="text" id="f-att-input" placeholder="Add a name" autocomplete="off" enterkeyhint="done" aria-label="Add an attendee"></div>
+          <div class="att-sugg" id="f-att-sugg"></div></div>
         <label class="field"><span>Location or link <em>· optional</em></span><input type="text" id="f-loc" placeholder="e.g., Meeting hall, or a Zoom link" autocomplete="off" spellcheck="false"></label>
-        <label class="field"><span>Agenda <em>· optional</em></span><textarea id="f-agenda" rows="2" placeholder="Topics, readings, people to pray for…"></textarea></label>
-        <label class="field"><span>Notes <em>· optional</em></span><textarea id="f-desc" rows="3" placeholder="Summary of work, tasks, or miles…"></textarea></label>
+        <label class="field"><span>Agenda &amp; notes <em>· optional</em></span><textarea id="f-desc" rows="3" placeholder="Topics, readings, prayer burdens, or a summary…"></textarea></label>
         <div class="form-actions">
           <button type="submit" class="btn btn-primary" id="f-save"><svg class="ic sm"><use href="#i-check"/></svg><span>Save entry</span></button>
           <button type="button" class="btn hidden" id="f-cancel">Cancel</button>
@@ -898,7 +915,7 @@ a.loc:hover { text-decoration: underline; }
         <div class="card toolbar">
           <div class="weeknav">
             <button class="btn-icon bordered" data-nav="log:-1" aria-label="Previous week"><svg class="ic"><use href="#i-left"/></svg></button>
-            <button class="btn btn-sm" data-nav="log:0">This week</button>
+            <button class="btn btn-sm" data-nav="log:0">Today</button>
             <button class="btn-icon bordered" data-nav="log:1" aria-label="Next week"><svg class="ic"><use href="#i-right"/></svg></button>
             <div class="weeknav-label"><b id="log-range"></b><span id="log-rel"></span></div>
           </div>
@@ -1001,9 +1018,9 @@ a.loc:hover { text-decoration: underline; }
         <div class="card-head"><h3 class="card-title">Journal</h3><span class="saved-note" id="hj-saved"></span></div>
         <p class="freedom-note"><svg class="ic sm"><use href="#i-sprout"/></svg><span>Don’t feel you have to write here every day. Write according to your inner sense, when the Lord is speaking or something is on your heart. And feel free not to use this page at all.</span></p>
         <div class="context" id="hj-context"></div>
-        <label class="field prompt"><span>Dealings &amp; denying the self</span><em>What did you pass through today, and where did you deny yourself?</em><textarea data-jf="dealings" rows="4" placeholder="Write freely…"></textarea></label>
-        <label class="field prompt"><span>What is God operating within you today?</span><em>What is He working into you through today’s environment?</em><textarea data-jf="operating" rows="4" placeholder="Write freely…"></textarea></label>
-        <label class="field prompt"><span>What is He calling out in your heart?</span><em>From your personal time with the Lord</em><textarea data-jf="calling" rows="4" placeholder="Write freely…"></textarea></label>
+        <label class="field prompt"><span data-jq="dealings"></span><em data-jx="dealings"></em><textarea data-jf="dealings" rows="4" placeholder="Write freely…"></textarea></label>
+        <label class="field prompt"><span data-jq="operating"></span><em data-jx="operating"></em><textarea data-jf="operating" rows="4" placeholder="Write freely…"></textarea></label>
+        <label class="field prompt"><span data-jq="calling"></span><em data-jx="calling"></em><textarea data-jf="calling" rows="4" placeholder="Write freely…"></textarea></label>
       </div>
       <div class="col">
         <div class="card" style="display:flex;flex-direction:column;gap:12px">
@@ -1312,8 +1329,10 @@ a.loc:hover { text-decoration: underline; }
         </div>
       </div>
       <label class="field"><span>Tag</span><select id="p-tag"></select></label>
-      <label class="field" id="p-agenda-wrap"><span>Agenda <em>· optional</em></span><textarea id="p-agenda" rows="3" placeholder="Topics, readings, people to pray for…"></textarea></label>
-      <label class="field" id="p-notes-wrap"><span>Notes <em>· optional</em></span><textarea id="p-notes" rows="2" placeholder="Anything to remember"></textarea></label>
+      <div class="field" id="p-att-wrap"><span>Attendees <em>· optional</em></span>
+        <div class="att-box" id="p-att-box"><input type="text" id="p-att-input" placeholder="Add a name" autocomplete="off" enterkeyhint="done" aria-label="Add an attendee"></div>
+        <div class="att-sugg" id="p-att-sugg"></div></div>
+      <label class="field" id="p-notes-wrap"><span>Agenda &amp; notes <em>· optional</em></span><textarea id="p-notes" rows="3" placeholder="Topics, readings, prayer burdens, anything to remember"></textarea></label>
       <div class="btn-row">
         <button class="btn btn-primary" type="submit" id="p-save">Save plan</button>
         <button class="btn btn-danger-ghost hidden" type="button" id="p-delete"><svg class="ic sm"><use href="#i-trash"/></svg>Delete plan</button>
@@ -1419,10 +1438,10 @@ a.loc:hover { text-decoration: underline; }
 //    The Web app URL stays the same.
 
 var SECRET = 'CHANGE_ME_TO_A_LONG_RANDOM_STRING';
-var VERSION = 8;
-var HEADERS = ['ID', 'Date', 'Subject', 'TotalMinutes', 'Tag', 'Description', 'CreatedAt', 'UpdatedAt', 'Deleted', 'StartTime', 'EndTime', 'Location', 'Agenda'];
+var VERSION = 9;
+var HEADERS = ['ID', 'Date', 'Subject', 'TotalMinutes', 'Tag', 'Description', 'CreatedAt', 'UpdatedAt', 'Deleted', 'StartTime', 'EndTime', 'Location', 'Agenda', 'Attendees'];
 var PLAN_HEADERS = ['ID', 'Title', 'Tag', 'Notes', 'Date', 'StartTime', 'EndTime', 'Days', 'Until', 'Skips',
-                    'CreatedAt', 'UpdatedAt', 'Deleted', 'Source', 'CalEventId', 'CalSig', 'Location', 'Agenda'];
+                    'CreatedAt', 'UpdatedAt', 'Deleted', 'Source', 'CalEventId', 'CalSig', 'Location', 'Agenda', 'Attendees'];
 var CAL_NAME = 'Timesheet Plans';      // what's still ahead
 var LOG_CAL_NAME = 'Timesheet Log';    // everything you logged, at the actual times
 var LOG_BATCH = 15;                    // log events written per app sync (keeps syncs quick)
@@ -1519,7 +1538,7 @@ function autoLog_(plans, rows, cats, tz) {
       var tag = p.tag || 'Untagged';
       if (cats.indexOf(tag) < 0) { cats.push(tag); catsChanged = true; }
       rows.push(makeRow_({ id: id, date: d, subject: p.title, totalMinutes: Math.round((en - st) / 60000), tag: tag,
-                           description: p.notes || '', startTime: p.startTime, endTime: p.endTime, location: p.location || '', agenda: p.agenda || '' }, stamp, stamp));
+                           description: p.notes || '', startTime: p.startTime, endTime: p.endTime, location: p.location || '', agenda: p.agenda || '', attendees: p.attendees || '' }, stamp, stamp));
       exists[id] = true;
       logged++;
     });
@@ -1653,14 +1672,14 @@ function applyOps_(rows, cats, plans, ops) {
 function makeRow_(en, createdAt, stamp) {
   return [String(en.id), String(en.date || ''), String(en.subject || ''), Number(en.totalMinutes) || 0,
           String(en.tag || ''), String(en.description || ''), createdAt, stamp, '', String(en.startTime || ''), String(en.endTime || ''),
-          String(en.location || ''), String(en.agenda || '')];
+          String(en.location || ''), String(en.agenda || ''), String(en.attendees || '')];
 }
 
 function toEntry_(r) {
   return {
     id: r[0], date: r[1], subject: r[2], totalMinutes: r[3], tag: r[4], description: r[5],
     createdAt: r[6], updatedAt: r[7] || r[6] || EPOCH, deleted: /^(yes|true)$/i.test(r[8]), startTime: r[9] || '', endTime: r[10] || '',
-    location: r[11] || '', agenda: r[12] || ''
+    location: r[11] || '', agenda: r[12] || '', attendees: r[13] || ''
   };
 }
 
@@ -1676,7 +1695,7 @@ function planFromOp_(p, prev) {
     updatedAt: String(p.updatedAt || ''), deleted: '',
     source: prev ? prev.source : (p.source === 'calendar' ? 'calendar' : 'app'),
     calEventId: prev ? prev.calEventId : '', calSig: prev ? prev.calSig : '',
-    location: String(p.location || ''), agenda: String(p.agenda || '')
+    location: String(p.location || ''), agenda: String(p.agenda || ''), attendees: String(p.attendees || '')
   };
 }
 
@@ -1686,7 +1705,7 @@ function toPlan_(p) {
     id: p.id, title: p.title, tag: p.tag, notes: p.notes, date: p.date, startTime: p.startTime, endTime: p.endTime,
     days: nums(p.days), until: p.until, skips: p.skips ? String(p.skips).split(',').filter(String) : [],
     createdAt: p.createdAt, updatedAt: p.updatedAt || p.createdAt || EPOCH, deleted: p.deleted === 'yes',
-    source: p.source || 'app', calLinked: !!p.calEventId, location: p.location || '', agenda: p.agenda || ''
+    source: p.source || 'app', calLinked: !!p.calEventId, location: p.location || '', agenda: p.agenda || '', attendees: p.attendees || ''
   };
 }
 
@@ -1698,8 +1717,8 @@ function plansSheet_(ss) {
     ps.getRange(1, 1, 1, PLAN_HEADERS.length).setValues([PLAN_HEADERS]);
     ps.setFrozenRows(1);
   }
-  if (ps.getRange(1, PLAN_HEADERS.length).getValue() !== 'Agenda') {   // older sheets: add Location & Agenda
-    ps.getRange(1, PLAN_HEADERS.length - 1, ps.getMaxRows(), 2).setNumberFormat('@');
+  if (ps.getRange(1, PLAN_HEADERS.length).getValue() !== 'Attendees') {   // older sheets: add Location, Agenda & Attendees
+    ps.getRange(1, PLAN_HEADERS.length - 2, ps.getMaxRows(), 3).setNumberFormat('@');
     ps.getRange(1, 1, 1, PLAN_HEADERS.length).setValues([PLAN_HEADERS]);
   }
   return ps;
@@ -1716,7 +1735,7 @@ function readPlans_(ps) {
       return {
         id: v(0), title: v(1), tag: v(2), notes: v(3), date: v(4, 'yyyy-MM-dd'), startTime: v(5, 'HH:mm'), endTime: v(6, 'HH:mm'),
         days: v(7), until: v(8, 'yyyy-MM-dd'), skips: v(9), createdAt: stamp_(r[10]), updatedAt: stamp_(r[11]),
-        deleted: v(12), source: v(13), calEventId: v(14), calSig: v(15), location: v(16), agenda: v(17)
+        deleted: v(12), source: v(13), calEventId: v(14), calSig: v(15), location: v(16), agenda: v(17), attendees: v(18)
       };
     });
 }
@@ -1728,7 +1747,7 @@ function writePlans_(ps, plans) {
   if (ps.getMaxRows() < plans.length + 1) ps.insertRowsAfter(ps.getMaxRows(), plans.length + 1 - ps.getMaxRows());
   ps.getRange(2, 1, plans.length, PLAN_HEADERS.length).setNumberFormat('@').setValues(plans.map(function (p) {
     return [p.id, p.title, p.tag, p.notes, p.date, p.startTime, p.endTime, p.days, p.until, p.skips,
-            p.createdAt, p.updatedAt, p.deleted, p.source, p.calEventId, p.calSig, p.location || '', p.agenda || ''];
+            p.createdAt, p.updatedAt, p.deleted, p.source, p.calEventId, p.calSig, p.location || '', p.agenda || '', p.attendees || ''];
   }));
 }
 
@@ -1806,7 +1825,7 @@ function syncCalendar_(plans, cats, force, rows) {
 }
 
 function sig_(p, doneDates) {
-  return [p.title, p.tag, p.notes, p.date, p.startTime, p.endTime, p.days, p.until, p.skips, p.deleted, (doneDates || []).slice().sort().join(','), tz_(), p.location || '', p.agenda || ''].join('|');
+  return [p.title, p.tag, p.notes, p.date, p.startTime, p.endTime, p.days, p.until, p.skips, p.deleted, (doneDates || []).slice().sort().join(','), tz_(), p.location || '', p.agenda || '', p.attendees || ''].join('|');
 }
 
 var WEEKDAYS_ = null;
@@ -1856,7 +1875,7 @@ function pushPlan_(cal, p, tz, doneDates) {
   if (p.until && first > p.until) return;
   var start = at_(first, p.startTime, tz), end = at_(first, p.endTime, tz);
   if (end <= start) end = new Date(end.getTime() + 86400000);
-  var opts = { description: (p.agenda ? 'Agenda:\n' + p.agenda + '\n\n' : '') + (p.notes ? p.notes + '\n\n' : '') + (p.tag ? 'Tag: ' + p.tag + '\n' : '') + 'Planned in the Timesheet app. Edit or delete it there.' };
+  var opts = { description: (p.attendees ? 'With: ' + p.attendees + '\n\n' : '') + (p.agenda ? 'Agenda:\n' + p.agenda + '\n\n' : '') + (p.notes ? p.notes + '\n\n' : '') + (p.tag ? 'Tag: ' + p.tag + '\n' : '') + 'Planned in the Timesheet app. Edit or delete it there.' };
   if (p.location) opts.location = p.location;
   var ev;
   if (days.length) {
@@ -1908,7 +1927,7 @@ function pullCalendar_(cal, plans, cats, tz, done) {
     var q = idx[id];
     if (q === undefined) {
       plans.push({
-        id: id, title: title, tag: guessTag_(title, cats), notes: String(ev.getDescription() || '').replace(/<[^>]+>/g, ' ').trim(), location: String(ev.getLocation() || ''), agenda: '',
+        id: id, title: title, tag: guessTag_(title, cats), notes: String(ev.getDescription() || '').replace(/<[^>]+>/g, ' ').trim(), location: String(ev.getLocation() || ''), agenda: '', attendees: '',
         date: d, startTime: s, endTime: e, days: '', until: '', skips: '', createdAt: stamp, updatedAt: stamp,
         deleted: '', source: 'calendar', calEventId: ev.getId(), calSig: ev.isRecurringEvent() ? 'rec' : ''
       });
@@ -2026,7 +2045,7 @@ function planNote_(e, planIndex) {
 }
 function time12_(t) { var h = Number(t.slice(0, 2)), m = t.slice(3, 5); return ((h + 11) % 12 + 1) + ':' + m + (h >= 12 ? ' PM' : ' AM'); }
 function logSig_(e, planIndex) {
-  var base = [e.date, e.startTime, e.endTime, e.subject, e.tag, e.description, e.totalMinutes, tz_()].join('|') + (e.location || e.agenda ? '|' + (e.location || '') + '|' + (e.agenda || '') : '');
+  var base = [e.date, e.startTime, e.endTime, e.subject, e.tag, e.description, e.totalMinutes, tz_()].join('|') + (e.location || e.agenda || e.attendees ? '|' + (e.location || '') + '|' + (e.agenda || '') + '|' + (e.attendees || '') : '');
   return planIdOf_(e) ? base + '|' + planNote_(e, planIndex) : base;   // unchanged for ordinary entries
 }
 function fmtDur_(min) { min = Math.round(Number(min) || 0); var h = Math.floor(min / 60), m = min % 60; return !h ? m + 'm' : !m ? h + 'h' : h + 'h ' + m + 'm'; }
@@ -2036,7 +2055,7 @@ function putLogEvent_(cal, e, evId, tz, planIndex) {
   if (end <= start) end = new Date(end.getTime() + 86400000);
   var note = planNote_(e, planIndex);
   var title = (note ? '✓ ' : '') + (e.subject || e.tag || 'Logged activity');
-  var desc = (e.tag ? e.tag + '\n\n' : '') + (e.agenda ? 'Agenda:\n' + e.agenda + '\n\n' : '') + (e.description ? e.description + '\n\n' : '') + (note ? note + '\n' : '') + 'Logged in your timesheet · ' + fmtDur_(e.totalMinutes);
+  var desc = (e.tag ? e.tag + '\n\n' : '') + (e.attendees ? 'With: ' + e.attendees + '\n\n' : '') + (e.agenda ? 'Agenda:\n' + e.agenda + '\n\n' : '') + (e.description ? e.description + '\n\n' : '') + (note ? note + '\n' : '') + 'Logged in your timesheet · ' + fmtDur_(e.totalMinutes);
   var loc = String(e.location || '');
   var ev = null;
   if (evId) { try { ev = cal.getEventById(evId); } catch (x) { ev = null; } }
@@ -2104,10 +2123,10 @@ function syncLogCalendar_(ss, rows, budget, plans) {
 // Date objects or treating notes that start with "=" as formulas. Existing rows are kept.
 function entriesSheet_(ss) {
   var sh = ss.getSheetByName('Entries') || ss.insertSheet('Entries');
-  if (sh.getRange(1, HEADERS.length).getValue() !== 'Agenda') {
+  if (sh.getRange(1, HEADERS.length).getValue() !== 'Attendees') {
     var rows = readRows_(sh); // read first so legacy Date cells become text
     sh.getRange('A:C').setNumberFormat('@');
-    sh.getRange('E:M').setNumberFormat('@');
+    sh.getRange('E:N').setNumberFormat('@');
     sh.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS]);
     sh.setFrozenRows(1);
     writeRows_(sh, rows);
@@ -2124,7 +2143,7 @@ function readRows_(sh) {
     .map(function (r) {
       return [String(r[0]), r[1] instanceof Date ? Utilities.formatDate(r[1], tz, 'yyyy-MM-dd') : String(r[1]),
               String(r[2]), Number(r[3]) || 0, String(r[4]), String(r[5]), stamp_(r[6]), stamp_(r[7]), String(r[8] || ''), time_(r[9], tz), time_(r[10], tz),
-              String(r[11] || ''), String(r[12] || '')];
+              String(r[11] || ''), String(r[12] || ''), String(r[13] || '')];
     });
 }
 
@@ -2307,7 +2326,7 @@ function buildSampleEntries() {
     { code: 'MR', p: .85, days: [1, 2, 3, 4, 5, 6], start: [390, 480], dur: [20, 45], subj: () => `MR with ${one(people)}`, note: () => `Week ${1 + Math.floor(rnd() * 8)} · Day ${1 + Math.floor(rnd() * 6)}` },
     { code: 'PTL', p: .4, days: [0, 1, 2, 3, 4, 5, 6], start: [360, 420], dur: [15, 45], subj: () => one(['Personal time with the Lord', 'Morning prayer', 'Quiet time']), note: () => '' },
     { code: 'LD', loc: () => 'Meeting hall', p: .95, days: [0], start: [570, 630], dur: [90, 150], subj: () => one(["Lord's Day meeting", "Lord's table meeting", "Lord's Day & prophesying"]), note: () => one(['Prophesied on the week’s MR', 'Enjoyed the Lord’s table', '']) },
-    { code: 'PM', p: .85, days: [2], start: [1140, 1170], dur: [60, 105], subj: () => one(['Prayer meeting', 'Church prayer meeting']), note: () => '', loc: () => 'https://zoom.us/j/1234567890', agenda: () => 'Pray for the campus, the new ones and the gospel outreach' },
+    { code: 'PM', p: .85, days: [2], start: [1140, 1170], dur: [60, 105], subj: () => one(['Prayer meeting', 'Church prayer meeting']), loc: () => 'https://zoom.us/j/1234567890', note: () => 'Agenda: pray for the campus, the new ones and the gospel outreach' },
     { code: 'VG', p: .8, days: [5, 0], start: [720, 1140], dur: [90, 180], subj: () => one(['Small group meeting', 'Home meeting', 'Small group lunch']), note: () => '' },
     { code: 'CM', p: .5, days: [1, 2, 3, 4], start: [540, 660], dur: [30, 90], subj: () => `CM with ${one(people)}${chance(.4) ? ' & ' + one(people) : ''}`, note: () => one(['Coordinated the week', 'Campus planning', 'Conference hosting', '']) },
     { code: 'CW', p: .55, days: [1, 2, 3, 4], start: [690, 810], dur: [60, 150], subj: () => one(['Campus table', 'Bible reading on campus', 'Campus outreach']), note: () => chance(.5) ? `Read ${one(books)} with students` : '' },
@@ -2317,7 +2336,7 @@ function buildSampleEntries() {
     { code: 'BR', p: .4, days: [1, 2, 3, 4, 5], start: [900, 1260], dur: [30, 75], subj: () => `Bible reading with ${one(people)}`, note: () => `${one(books)} ${1 + Math.floor(rnd() * 20)}` },
     { code: 'PA', p: .3, days: [1, 3, 5, 6], start: [1050, 1260], dur: [45, 120], subj: () => one(['Basketball', 'Running', 'Gym', 'Hike', 'Walk dogs']), note: () => '' }
   ];
-  const out = [];
+  const out = []; let sj = '';
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const nowMin = new Date().getHours() * 60 + new Date().getMinutes();
   for (let back = 112; back >= 0; back--) {
@@ -2330,7 +2349,7 @@ function buildSampleEntries() {
       if (s + mins > 1435 || busy.some(([a, b]) => s < b && s + mins > a)) return;   // keep the day realistic: no overlaps
       if (back === 0 && s + mins > nowMin) return;                // nothing in the future today
       busy.push([s, s + mins]);
-      out.push({ id: `sample_${isoDate(d)}_${hm(s).replace(':', '')}_${out.length}`, date: isoDate(d), subject: k.subj(), description: k.note(),
+      out.push({ id: `sample_${isoDate(d)}_${hm(s).replace(':', '')}_${out.length}`, date: isoDate(d), subject: (sj = k.subj()), description: k.note(), attendees: ((sj.match(/ with (.+)$/) || [])[1] || '').split(' & ').join(', '),
                  totalMinutes: mins, tag: pick(k.code, i), startTime: hm(s), endTime: hm(s + mins), location: k.loc ? k.loc() : '', agenda: k.agenda ? k.agenda() : '', createdAt: '2026-01-01T00:00:00.000Z' });
     });
   }
@@ -2661,15 +2680,16 @@ function renderLog() {
   renderConfirm();
   const days = weekDays(ui.logWeek), first = isoDate(days[0]), last = isoDate(days[6]);
   $('#log-range').textContent = fmtRange(days[0], days[6]);
-  $('#log-rel').textContent = relWeek(ui.logWeek);
+  const wom = weekOfMonth(days);
+  $('#log-rel').textContent = `Week ${wom.n} of ${wom.month}`;
   const q = $('#log-search').value.trim().toLowerCase(), tag = $('#log-filter').value;
   const list = entries.filter(e => e.date >= first && e.date <= last)
     .filter(e => tag === 'ALL' || e.tag === tag)
-    .filter(e => !q || [e.subject, e.description, e.tag].some(v => String(v || '').toLowerCase().includes(q)));
+    .filter(e => !q || [e.subject, e.description, e.tag, e.attendees, e.location].some(v => String(v || '').toLowerCase().includes(q)));
 
   const total = sum(list, e => e.totalMinutes);
   $('#log-summary').innerHTML = list.length
-    ? `<b>${fmtDur(total)}</b><span>${plural(list.length, 'entry', 'entries')}${q || tag !== 'ALL' ? ' matching your filters' : ' this week'}</span>`
+    ? `<b>${fmtDur(total)}</b><span>${plural(list.length, 'entry', 'entries')}${q || tag !== 'ALL' ? ' matching your filters' : ` in week ${wom.n}`}</span>`
     : '';
 
   const box = $('#log-list');
@@ -2704,7 +2724,7 @@ function entryRow(e) {
     <div class="entry-time">${time}</div>
     <div class="entry-main">
       <div class="entry-title">${esc(e.subject)}</div>
-      <div class="entry-meta">${chip(e.tag)}${locHtml(e.location)}${isSample(e.id) ? '<span class="sample-tag">Sample</span>' : ''}</div>
+      <div class="entry-meta">${chip(e.tag)}${attHtml(e.attendees)}${locHtml(e.location)}${isSample(e.id) ? '<span class="sample-tag">Sample</span>' : ''}</div>
       ${e.description ? `<p class="entry-desc">${esc(e.description)}</p>` : ''}${agendaHtml(e.agenda)}
     </div>
     <div class="entry-side">
@@ -2759,6 +2779,7 @@ function resetForm() {
   ui.editingId = null;
   ui.planEntryId = null;
   $('#entry-form').reset();
+  setAtt('f', '');
   $('#f-date').value = todayISO();
   $('#form-title').textContent = 'Log activity';
   $('#f-save span').textContent = 'Save entry';
@@ -2774,7 +2795,7 @@ function handleSave(ev) {
   const date = $('#f-date').value;
   const subject = $('#f-subject').value.trim();
   const description = $('#f-desc').value.trim();
-  const location = $('#f-loc').value.trim(), agenda = $('#f-agenda').value.trim();
+  const location = $('#f-loc').value.trim(), agenda = '', attendees = takeAtt('f');
   if (!date) return toast('Please choose a date.', true);
   if (!subject) { $('#f-subject').focus(); return toast('Please add a subject.', true); }
 
@@ -2799,12 +2820,12 @@ function handleSave(ev) {
 
   const id = ui.editingId;
   if (id && store[id]) {
-    localUpsert({ ...store[id], date, subject, totalMinutes, tag, description, startTime, endTime, location, agenda });
+    localUpsert({ ...store[id], date, subject, totalMinutes, tag, description, startTime, endTime, location, agenda, attendees });
     toast('Entry updated.');
   } else {
     localUpsert({
       id: ui.planEntryId || ('entry_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6)),
-      date, subject, totalMinutes, tag, description, startTime, endTime, location, agenda,
+      date, subject, totalMinutes, tag, description, startTime, endTime, location, agenda, attendees,
       createdAt: new Date().toISOString()
     });
     toast('Activity logged.');
@@ -2829,9 +2850,9 @@ function editEntry(id) {
   ui.editingId = id;
   $('#f-date').value = en.date;
   $('#f-subject').value = en.subject || '';
-  $('#f-desc').value = en.description || '';
+  $('#f-desc').value = [en.agenda, en.description].filter(Boolean).join('\n\n');
   $('#f-loc').value = en.location || '';
-  $('#f-agenda').value = en.agenda || '';
+  setAtt('f', en.attendees);
   if (en.tag && !categories.includes(en.tag)) { categories.push(en.tag); renderTagOptions(); }
   $('#f-tag').value = en.tag;
   toggleNewTagField();
@@ -3110,7 +3131,7 @@ function renderConfirm() {
     ${shown.map(o => {
       const p = o.plan;
       return `<div class="cf-row"><div style="min-width:0"><div class="cf-title">${esc(p.title)}</div>
-        <div class="cf-meta"><span>${dayLabel(o.date)} · ${fmtTime(p.startTime)} – ${fmtTime(p.endTime)}</span>${locHtml(p.location)}${p.tag ? chip(p.tag) : '<span class="chip" style="background:var(--surface-2)"><span>Needs a tag</span></span>'}</div></div>
+        <div class="cf-meta"><span>${dayLabel(o.date)} · ${fmtTime(p.startTime)} – ${fmtTime(p.endTime)}</span>${attHtml(p.attendees)}${locHtml(p.location)}${p.tag ? chip(p.tag) : '<span class="chip" style="background:var(--surface-2)"><span>Needs a tag</span></span>'}</div></div>
         <div class="cf-actions">
           <button class="btn btn-sm btn-primary" data-cf="confirm" data-key="${esc(o.entryId)}" title="Log it as planned">${icon('check', 'sm')}<span>Confirm</span></button>
           <button class="btn-icon" data-cf="adjust" data-key="${esc(o.entryId)}" title="Adjust, then log" aria-label="Adjust, then log">${icon('pencil', 'sm')}</button>
@@ -3124,8 +3145,8 @@ function confirmOcc(o, quiet = false) {
   const p = o.plan;
   if (!p.tag) { if (!quiet) adjustOcc(o); return false; }
   if (!categories.includes(p.tag)) { categories.push(p.tag); queueOp({ type: 'categories', categories: [p.tag] }); }
-  localUpsert({ id: o.entryId, date: o.date, subject: p.title, totalMinutes: o.mins, tag: p.tag, description: p.notes || '',
-                startTime: p.startTime, endTime: p.endTime, location: p.location || '', agenda: p.agenda || '', createdAt: new Date().toISOString() });
+  localUpsert({ id: o.entryId, date: o.date, subject: p.title, totalMinutes: o.mins, tag: p.tag, description: [p.agenda, p.notes].filter(Boolean).join('\n\n'),
+                startTime: p.startTime, endTime: p.endTime, location: p.location || '', agenda: '', attendees: p.attendees || '', createdAt: new Date().toISOString() });
   if (!quiet) { persistLocal(); renderAll(); toast(`Logged “${p.title}”.`); syncNow(); }
   return true;
 }
@@ -3144,9 +3165,9 @@ function adjustOcc(o) {
   ui.planEntryId = o.entryId;
   $('#f-date').value = o.date;
   $('#f-subject').value = p.title;
-  $('#f-desc').value = p.notes || '';
+  $('#f-desc').value = [p.agenda, p.notes].filter(Boolean).join('\n\n');
   $('#f-loc').value = p.location || '';
-  $('#f-agenda').value = p.agenda || '';
+  setAtt('f', p.attendees);
   if (p.tag && categories.includes(p.tag)) $('#f-tag').value = p.tag;
   toggleNewTagField();
   $('#f-start').value = p.startTime;
@@ -3174,7 +3195,8 @@ function openOcc(key) {
   $('#occ-title').textContent = p.title;
   $('#occ-meta').textContent = `${dayLabel(o.date)} · ${fmtTime(p.startTime)} – ${fmtTime(p.endTime)}${p.days && p.days.length ? ' · repeats ' + daysText(p.days) : ''}${p.tag ? ' · ' + p.tag : ''}${fromCal ? ' · from Google Calendar' : ''}`;
   $('#occ-extra').innerHTML = (p.location && !locUrl(p.location) ? locHtml(p.location) : '') +
-    (p.agenda ? `<div class="agenda-box"><b>Agenda</b>${esc(p.agenda)}</div>` : '');
+    (p.attendees ? `<div>${attHtml(p.attendees)}</div>` : '') +
+    ([p.agenda, p.notes].filter(Boolean).length ? `<div class="agenda-box"><b>Agenda &amp; notes</b>${esc([p.agenda, p.notes].filter(Boolean).join('\n\n'))}</div>` : '');
   const btns = [];
   if (locUrl(p.location)) btns.push(['btn btn-primary', `${icon('video', 'sm')}Join meeting`, () => window.open(locUrl(p.location), '_blank', 'noopener')]);
   if (o.status === 'due') {
@@ -3211,9 +3233,9 @@ function openPlanForm(id, prefill = {}) {
   $('#p-date').value = p ? p.date : (prefill.date || todayISO());
   $('#p-start').value = p ? p.startTime : (prefill.start || '');
   $('#p-end').value = p ? p.endTime : (prefill.end || '');
-  $('#p-notes').value = p ? (p.notes || '') : '';
+  $('#p-notes').value = p ? [p.agenda, p.notes].filter(Boolean).join('\n\n') : '';
   $('#p-loc').value = p ? (p.location || '') : '';
-  $('#p-agenda').value = p ? (p.agenda || '') : '';
+  setAtt('p', p ? p.attendees : '');
   ui.planDays = p ? (p.days || []).slice() : [];
   $('#p-repeat').checked = ui.planDays.length > 0;
   $('#p-until').value = p ? (p.until || '') : '';
@@ -3228,7 +3250,6 @@ function openPlanForm(id, prefill = {}) {
   $('#p-cal-note').classList.toggle('hidden', !fromCal);
   $('#p-editable').classList.toggle('input-disabled', fromCal);
   $('#p-notes-wrap').classList.toggle('hidden', fromCal);
-  $('#p-agenda-wrap').classList.toggle('hidden', fromCal);
   $('#p-delete').classList.toggle('hidden', !p || fromCal);
   const d = $('#plan-dlg');
   if (!d.open) d.showModal();
@@ -3239,7 +3260,7 @@ function savePlan(ev) {
   const existing = ui.editingPlan ? plans[ui.editingPlan] : null;
   const tag = $('#p-tag').value;
   if (existing && existing.source === 'calendar') {
-    localPlanUpsert({ ...existing, tag });
+    localPlanUpsert({ ...existing, tag, attendees: takeAtt('p') });
     persistLocal(); $('#plan-dlg').close(); renderAll(); toast('Tag saved.'); syncNow();
     return;
   }
@@ -3252,7 +3273,7 @@ function savePlan(ev) {
   if (until && until < date) return toast('The end date is before the start date.', true);
   localPlanUpsert({
     id: existing ? existing.id : 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-    title, tag, notes: $('#p-notes').value.trim(), location: $('#p-loc').value.trim(), agenda: $('#p-agenda').value.trim(), date, startTime, endTime,
+    title, tag, notes: $('#p-notes').value.trim(), location: $('#p-loc').value.trim(), agenda: '', attendees: takeAtt('p'), date, startTime, endTime,
     days: repeat ? ui.planDays.slice().sort() : [], until, skips: existing ? (existing.skips || []) : [],
     createdAt: existing ? existing.createdAt : new Date().toISOString(), source: 'app'
   });
@@ -3281,7 +3302,7 @@ function renderPlansList() {
   const repeating = live.filter(p => p.days && p.days.length && (!p.until || p.until >= t) && p.source !== 'calendar').sort((a, b) => a.startTime.localeCompare(b.startTime));
   const upcoming = live.filter(p => (!p.days || !p.days.length) && p.date >= t).sort((a, b) => (a.date + a.startTime).localeCompare(b.date + b.startTime));
   const row = (p, sub) => `<div class="plan-row"><i style="background:${p.tag ? tagHex(p.tag) : 'var(--faint)'}"></i>
-    <div class="pr-main"><div class="pr-title">${esc(p.title)}</div><div class="pr-sub">${sub}</div>${p.location ? `<div>${locHtml(p.location)}</div>` : ''}</div>
+    <div class="pr-main"><div class="pr-title">${esc(p.title)}</div><div class="pr-sub">${sub}</div>${p.location || p.attendees ? `<div style="display:flex;gap:4px 12px;flex-wrap:wrap">${attHtml(p.attendees)}${locHtml(p.location)}</div>` : ''}</div>
     <button class="btn-icon" data-editplan="${esc(p.id)}" aria-label="Edit ${esc(p.title)}">${icon('pencil', 'sm')}</button></div>`;
   const grp = (title, items) => items.length ? `<div class="plan-group">${title}</div><div class="tag-list">${items.join('')}</div>` : '';
   const html = grp('Repeating', repeating.map(p => row(p, `${daysText(p.days)} · ${fmtTime(p.startTime)} – ${fmtTime(p.endTime)}${p.until ? ' · until ' + parseDate(p.until).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}`)))
@@ -3546,9 +3567,9 @@ function exportCSV() {
   if (!real.length) return toast('No entries to export yet.', true);
   const q = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
   const rows = real.slice().sort((a, b) => String(a.date).localeCompare(String(b.date)) || String(a.startTime || '').localeCompare(String(b.startTime || '')));
-  let csv = 'ID,Date,Subject,Hours,Minutes,TotalHours,Category,Description,StartTime,EndTime,Location,Agenda\n';
+  let csv = 'ID,Date,Subject,Hours,Minutes,TotalHours,Category,Description,StartTime,EndTime,Location,Attendees\n';
   rows.forEach(e => {
-    csv += [q(e.id), e.date, q(e.subject), Math.floor(e.totalMinutes / 60), e.totalMinutes % 60, (e.totalMinutes / 60).toFixed(2), q(e.tag), q(e.description), e.startTime || '', e.endTime || '', q(e.location), q(e.agenda)].join(',') + '\n';
+    csv += [q(e.id), e.date, q(e.subject), Math.floor(e.totalMinutes / 60), e.totalMinutes % 60, (e.totalMinutes / 60).toFixed(2), q(e.tag), q(e.description), e.startTime || '', e.endTime || '', q(e.location), q(e.attendees)].join(',') + '\n';
   });
   downloadBlob(csv, `Timesheet_Export_${todayISO()}.csv`, 'text/csv');
   toast('CSV exported.');
@@ -3573,7 +3594,7 @@ function importJSON(ev) {
           id: item.id || ('entry_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6)),
           date: item.date, subject: item.subject, totalMinutes: Number(item.totalMinutes) || 0,
           tag: item.tag || categories[0], description: item.description || '',
-          startTime: item.startTime || '', endTime: item.endTime || '', location: item.location || '', agenda: item.agenda || '',
+          startTime: item.startTime || '', endTime: item.endTime || '', location: item.location || '', agenda: item.agenda || '', attendees: item.attendees || '',
           createdAt: item.createdAt || new Date().toISOString()
         });
         count++;
@@ -3973,6 +3994,7 @@ function renderHeart() {
     t.readOnly = sample;
   });
   ui.jDate = d;
+  renderPrompts(d, j);
   $('#hj-saved').innerHTML = sample ? '<span class="sample-pill">Sample</span>' : j.updatedAt ? 'Saved ' + fmtStamp(j.updatedAt) : '';
   const day = entries.filter(e => e.date === d), total = sum(day.filter(e => isWalk(e.tag)), e => e.totalMinutes);
   const ptlTag = findTag('PTL'), ptl = ptlTag ? sum(day.filter(e => e.tag === ptlTag), e => e.totalMinutes) : 0;
@@ -4023,6 +4045,7 @@ function saveJournal() {
   const id = 'journal_' + d, cur = recs[id] && !recs[id].deleted ? recs[id] : null;
   const sj = journalFor(d); if (sj && isSample(sj.id)) return;
   if (!cur && !Object.values(vals).some(v => v.trim())) { $('#hj-saved').textContent = ''; return; }
+  $$('[data-jq]').forEach(el => { if (vals[el.dataset.jq].trim() || (cur && cur['q_' + el.dataset.jq])) vals['q_' + el.dataset.jq] = el.textContent; });   // keep the question you answered
   if (cur && Object.keys(vals).every(k => (cur[k] || '') === vals[k])) { $('#hj-saved').textContent = 'Saved ' + fmtStamp(cur.updatedAt); return; }
   if (recPut({ ...(cur || {}), id, kind: 'journal', date: d, ...vals })) {
     $('#hj-saved').textContent = 'Saved ' + fmtStamp(new Date().toISOString());
@@ -4985,6 +5008,139 @@ function bindGarden() {
   });
 }
 
+/* =====================================================================
+   v3.3: rotating journal questions, attendees, week of the month,
+   and keeping the page still while you type.
+   ===================================================================== */
+
+/* ---------------- Heart journal: rotating questions ----------------
+   Each section shows one question a day (the same question all day), with a
+   permanent example below it. The question you answered is saved with your entry. */
+const JOURNAL_Q = {
+  dealings: [
+    ['Where did you deny yourself today?', 'Wanted to defend myself in a conversation; chose to stay quiet and let Him speak for me.'],
+    ['What pressed on you today, and how did you turn to the Lord in it?', 'Plans changed at the last minute. I felt irritated, then called on His name and took the lower place.'],
+    ['Was there a moment your natural self wanted its own way?', 'I wanted my evening for myself, but went to help a brother move.'],
+    ['What did the Lord touch in you through others today?', 'A brother’s word about my attitude stung, but I received it.'],
+    ['Is there anything you need to confess and make right?', 'I spoke harshly at work. I confessed it to the Lord and apologized.']
+  ],
+  operating: [
+    ['What is God operating within you today?', 'Patience. He keeps arranging slow situations to work His patience into me.'],
+    ['What is He working into you through today’s environment?', 'To coordinate with others instead of doing everything alone.'],
+    ['Where did you sense the inner anointing today?', 'A gentle sense to pray before answering a hard email.'],
+    ['What is He breaking, and what is He building, in you?', 'He’s breaking my independence and building my trust in Him.'],
+    ['How did Christ live in you today?', 'He was patient through me when I had no patience of my own.']
+  ],
+  calling: [
+    ['From your time with the Lord, what is He calling out in your heart?', 'Give Me the morning, and I’ll give you the day.'],
+    ['What word from your time with the Lord stayed with you?', 'Abide in Me, even in the busy hours.'],
+    ['What is the Lord asking of you today?', 'Love the brothers in practical ways this week.'],
+    ['What did He speak to you in the Word this morning?', 'He is with me in the hard conversation ahead.'],
+    ['What assurance did He give you?', 'He will finish what He began in me.']
+  ]
+};
+function journalQ(key, date) {
+  const pool = JOURNAL_Q[key], d = parseDate(date), n = Math.floor((d - new Date(d.getFullYear(), 0, 0)) / 86400000);
+  const off = { dealings: 0, operating: 2, calling: 4 }[key] || 0;
+  return pool[(n + off) % pool.length];
+}
+function renderPrompts(date, j) {
+  $$('[data-jq]').forEach(el => {
+    const key = el.dataset.jq, saved = j && j['q_' + key], [q, ex] = journalQ(key, date);
+    const pair = saved ? (JOURNAL_Q[key].find(x => x[0] === saved) || [saved, ex]) : [q, ex];
+    el.textContent = pair[0];
+    $(`[data-jx="${key}"]`).textContent = 'e.g., ' + pair[1];
+  });
+}
+
+/* ---------------- Attendees (remembered for next time) ---------------- */
+const splitNames = s => String(s || '').split(',').map(x => x.trim()).filter(Boolean);
+function knownAttendees() {
+  const count = {}, display = {};
+  [...realEntries().map(e => e.attendees), ...planList().map(p => p.attendees)].forEach(s => splitNames(s).forEach(n => {
+    const k = n.toLowerCase(); count[k] = (count[k] || 0) + 1; display[k] = display[k] || n;
+  }));
+  return Object.keys(count).sort((a, b) => count[b] - count[a] || a.localeCompare(b)).map(k => display[k]);
+}
+ui.att = { f: [], p: [] };
+function renderAtt(key) {
+  const box = $(`#${key}-att-box`), input = $(`#${key}-att-input`);
+  box.querySelectorAll('.att-chip').forEach(c => c.remove());
+  ui.att[key].forEach((n, i) => {
+    const c = document.createElement('span');
+    c.className = 'att-chip';
+    c.innerHTML = `<span>${esc(n)}</span><button type="button" data-attdel="${key}:${i}" aria-label="Remove ${esc(n)}">×</button>`;
+    box.insertBefore(c, input);
+  });
+  renderAttSugg(key);
+}
+function renderAttSugg(key) {
+  const typed = $(`#${key}-att-input`).value.trim().toLowerCase(), have = ui.att[key].map(n => n.toLowerCase());
+  const list = knownAttendees().filter(n => !have.includes(n.toLowerCase()) && (!typed || n.toLowerCase().includes(typed))).slice(0, typed ? 8 : 6);
+  $(`#${key}-att-sugg`).innerHTML = list.map(n => `<button type="button" data-attadd="${key}" data-name="${esc(n)}">${icon('plus', 'xs')}${esc(n)}</button>`).join('');
+}
+function addAtt(key, name) {
+  name = String(name || '').trim().replace(/\s+/g, ' ');
+  if (!name) return;
+  if (!ui.att[key].some(n => n.toLowerCase() === name.toLowerCase())) ui.att[key].push(name);
+  $(`#${key}-att-input`).value = '';
+  renderAtt(key);
+}
+function setAtt(key, s) { ui.att[key] = splitNames(s); $(`#${key}-att-input`).value = ''; renderAtt(key); }
+function takeAtt(key) { const t = $(`#${key}-att-input`).value; if (t.trim()) addAtt(key, t); return ui.att[key].join(', '); }
+const attHtml = s => s ? `<span class="loc" title="${esc(s)}">${icon('users')}<span>${esc(s)}</span></span>` : '';
+function bindAttendees() {
+  ['f', 'p'].forEach(key => {
+    const input = $(`#${key}-att-input`);
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addAtt(key, input.value); }
+      else if (e.key === 'Backspace' && !input.value && ui.att[key].length) { ui.att[key].pop(); renderAtt(key); }
+    });
+    input.addEventListener('input', () => { if (input.value.includes(',')) { input.value.split(',').forEach(n => addAtt(key, n)); } else renderAttSugg(key); });
+    $(`#${key}-att-box`).addEventListener('click', e => { if (e.target === e.currentTarget) input.focus(); });
+  });
+  document.addEventListener('click', e => {
+    const d = e.target.closest('[data-attdel]');
+    if (d) { const [k, i] = d.dataset.attdel.split(':'); ui.att[k].splice(Number(i), 1); renderAtt(k); return; }
+    const a = e.target.closest('[data-attadd]');
+    if (a) { addAtt(a.dataset.attadd, a.dataset.name); $(`#${a.dataset.attadd}-att-input`).focus({ preventScroll: true }); }
+  });
+}
+
+/* ---------------- Daily log: week of the month ---------------- */
+// The week belongs to the month its middle day falls in: Week 1, Week 2, …
+function weekOfMonth(days) {
+  const mid = days[3];
+  return { n: Math.floor((mid.getDate() - 1) / 7) + 1, month: MONTHS_LONG[mid.getMonth()] };
+}
+
+/* ---------------- Keep the page still while typing ---------------- */
+// 1) Redrawing after a background sync never moves the page.
+{
+  const draw = renderView;
+  renderView = function () { const y = window.scrollY; draw(); if (Math.abs(window.scrollY - y) > 1) window.scrollTo(0, y); };
+}
+// 2) While a pop-up is open, the page behind it is held in place, so opening the phone keyboard
+//    inside the pop-up can't scroll the page underneath back to the top.
+{
+  let held = false, heldY = 0;
+  const hold = () => {
+    if (held) return;
+    held = true; heldY = window.scrollY;
+    Object.assign(document.body.style, { position: 'fixed', top: `-${heldY}px`, left: '0', right: '0', width: '100%' });
+  };
+  const release = () => {
+    if (!held || document.querySelector('dialog[open]')) return;
+    held = false;
+    Object.assign(document.body.style, { position: '', top: '', left: '', right: '', width: '' });
+    window.scrollTo(0, heldY);
+  };
+  const show = HTMLDialogElement.prototype.showModal, close = HTMLDialogElement.prototype.close;
+  HTMLDialogElement.prototype.showModal = function () { hold(); return show.apply(this, arguments); };
+  HTMLDialogElement.prototype.close = function () { const r = close.apply(this, arguments); release(); return r; };
+  document.querySelectorAll('dialog').forEach(d => d.addEventListener('close', release));
+}
+
 /* ============================ Start ============================ */
 function init() {
   loadLocalState();
@@ -4992,6 +5148,7 @@ function init() {
   bindEvents();
   bindHeartBody();
   bindGarden();
+  bindAttendees();
   renderTagOptions();
   resetFoodForm();
   resetForm();
