@@ -790,6 +790,22 @@ a.loc:hover { text-decoration: underline; }
 .att-sugg button:hover { border-style: solid; border-color: var(--accent); color: var(--text); }
 input, textarea, select { scroll-margin-top: 96px; scroll-margin-bottom: 120px; }
 
+/* Chart views */
+.lens-bar { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin: -6px 0 -2px; }
+.lens-label { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--faint); margin-right: 4px; }
+.lens-bar button { height: 32px; padding: 0 13px; border-radius: 99px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); font-size: 13px; font-weight: 500; display: inline-flex; align-items: center; gap: 5px; }
+.lens-bar button:hover { color: var(--text); border-color: var(--border-strong); }
+.lens-bar button.on { background: var(--text); color: var(--bg); border-color: var(--text); }
+.lens-bar .lens-edit { border-style: dashed; }
+.lens-group { border: 1px solid var(--border); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 10px; background: var(--surface-2); }
+.lens-group-head { display: flex; gap: 8px; align-items: center; }
+.lens-group-head input { flex: 1; font-weight: 600; }
+.lens-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.lens-tag { border: 1px solid var(--border-strong); background: var(--surface); border-radius: 99px; padding: 4px 11px 4px 9px; font-size: 12.5px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
+.lens-tag i { width: 8px; height: 8px; border-radius: 50%; background: var(--c); }
+.lens-tag.on { border-color: var(--c); background: color-mix(in srgb, var(--c) 15%, var(--surface)); color: var(--text); font-weight: 600; }
+.lens-tag.taken { opacity: .45; }
+
 /* Each conscience step shows its verse */
 .scale button { align-items: flex-start; padding: 9px 12px; }
 .scale button i { margin-top: 2px; }
@@ -940,6 +956,7 @@ input, textarea, select { scroll-margin-top: 96px; scroll-margin-bottom: 120px; 
         <button class="btn-icon bordered" data-nav="wk:1" aria-label="Next week"><svg class="ic"><use href="#i-right"/></svg></button>
       </div>
     </div>
+    <div class="lens-bar" data-lensbar></div>
     <div class="stats" id="wk-stats"></div>
     <div class="grid-2">
       <div class="card"><h3 class="card-title">Hours per day</h3><div class="chart"><canvas id="wk-bar"></canvas></div></div>
@@ -971,11 +988,13 @@ input, textarea, select { scroll-margin-top: 96px; scroll-margin-bottom: 120px; 
         <button class="btn-icon bordered" data-nav="mo:1" aria-label="Next month"><svg class="ic"><use href="#i-right"/></svg></button>
       </div>
     </div>
+    <div class="lens-bar" data-lensbar></div>
     <div class="stats" id="mo-stats"></div>
     <div class="grid-3">
       <div class="card"><h3 class="card-title">Tag distribution</h3><div class="donut-box" id="mo-donut-box"><canvas id="mo-donut"></canvas><div class="donut-center" id="mo-donut-center"></div></div></div>
-      <div class="card"><h3 class="card-title">Tag breakdown</h3><div class="table-wrap" id="mo-table"></div></div>
+      <div class="card"><h3 class="card-title">Breakdown</h3><div class="table-wrap" id="mo-table"></div></div>
     </div>
+    <div class="card"><h3 class="card-title">Accumulated hours</h3><div class="chart tall"><canvas id="mo-accum"></canvas></div></div>
   </section>
 
   <!-- ============ ANNUAL ============ -->
@@ -988,6 +1007,7 @@ input, textarea, select { scroll-margin-top: 96px; scroll-margin-bottom: 120px; 
         <button class="btn-icon bordered" data-nav="yr:1" aria-label="Next year"><svg class="ic"><use href="#i-right"/></svg></button>
       </div>
     </div>
+    <div class="lens-bar" data-lensbar></div>
     <div class="stats" id="yr-stats"></div>
     <div class="card">
       <div class="card-head" style="margin-bottom:12px"><h3 class="card-title">Yearly goal outlook</h3><span class="goal-num" id="yr-goal-text"></span></div>
@@ -999,7 +1019,8 @@ input, textarea, select { scroll-margin-top: 96px; scroll-margin-bottom: 120px; 
       <div class="chart tall"><canvas id="yr-chart"></canvas></div>
       <div class="months" id="yr-months"></div>
     </div>
-    <div class="card"><h3 class="card-title">Tag breakdown for the year</h3><div class="table-wrap" id="yr-table"></div></div>
+    <div class="card"><h3 class="card-title">Accumulated hours</h3><div class="chart tall"><canvas id="yr-accum"></canvas></div></div>
+    <div class="card"><h3 class="card-title">Breakdown for the year</h3><div class="table-wrap" id="yr-table"></div></div>
   </section>
 
   <!-- ============ HEART · JOURNAL ============ -->
@@ -1222,6 +1243,10 @@ input, textarea, select { scroll-margin-top: 96px; scroll-margin-bottom: 120px; 
       <div class="pref-row"><span>Week starts on</span>
         <select id="set-weekstart" aria-label="Week starts on"><option value="0">Sunday</option><option value="1">Monday</option></select>
       </div>
+      <div class="pref-row"><span>Weekly goal <em class="mini">· hours</em></span>
+        <input type="number" id="set-goal" min="1" max="168" step="0.5" inputmode="decimal" aria-label="Weekly goal in hours" style="width:120px;flex:none">
+      </div>
+      <p class="hint">Sets the weekly plant in Spirit and the yearly outlook (52 weeks of it). Lower it if you work or study; it syncs to your other devices.</p>
     </section>
 
     <section class="set-sec">
@@ -1420,6 +1445,13 @@ input, textarea, select { scroll-margin-top: 96px; scroll-margin-bottom: 120px; 
       </div>
       <p class="hint">If you’re coming back from an injury or illness, check with your doctor or a physical therapist before ramping up.</p>
     </form>
+  </div>
+</dialog>
+
+<dialog id="lens-dlg" class="sheet" aria-labelledby="lens-dlg-title">
+  <div class="sheet-inner">
+    <div class="sheet-head"><h2 class="sheet-title" id="lens-dlg-title">Chart views</h2><button class="btn-icon" data-close aria-label="Close"><svg class="ic"><use href="#i-x"/></svg></button></div>
+    <div class="plan-form" id="lens-body"></div>
   </div>
 </dialog>
 
@@ -2278,8 +2310,8 @@ const WEEK_START_KEY = 'ts_week_start_v1';
 const VIEW_KEY = 'ts_view_v2';
 const LAST_TAG_KEY = 'ts_last_tag_v2';
 
-const WEEKLY_GOAL_HOURS = 40;
-const ANNUAL_GOAL_HOURS = 2080;          // 40 h × 52 weeks
+let WEEKLY_GOAL_HOURS = 40;              // set in Settings › Preferences (see applyGoal)
+let ANNUAL_GOAL_HOURS = 2080;            // weekly goal × 52 weeks
 const PLAN_START = 6 * 60, PLAN_END = 24 * 60, PLAN_HOUR_PX = 40;
 const SYNC_INTERVAL_MS = 15000;
 
@@ -2637,6 +2669,8 @@ function setView(v, save = true) {
   renderView();
 }
 function renderView() {
+  applyGoal();
+  renderLensBars();
   const v = ui.view;
   if (v === 'log') renderLog();
   else if (v === 'weekly') renderWeekly();
@@ -2778,6 +2812,7 @@ function updateCalc() {
 function resetForm() {
   ui.editingId = null;
   ui.planEntryId = null;
+  ui.autoSubj = '';
   $('#entry-form').reset();
   setAtt('f', '');
   $('#f-date').value = todayISO();
@@ -2959,20 +2994,20 @@ function renderWeekly() {
     type: 'bar',
     data: {
       labels: days.map(d => [DAY_NAMES[d.getDay()], String(d.getDate())]),
-      datasets: [{ data: perDay.map(m => +(m / 60).toFixed(2)), backgroundColor: isos.map(d => d === today ? c.accent : rgba(c.accent.startsWith('#') ? c.accent : '#047857', .45)), borderRadius: 7, maxBarThickness: 44 }]
+      datasets: activeLens() ? stackSets(lens(list), isos, e => e.date) : [{ data: perDay.map(m => +(m / 60).toFixed(2)), backgroundColor: isos.map(d => d === today ? c.accent : rgba(c.accent.startsWith('#') ? c.accent : '#047857', .45)), borderRadius: 7, maxBarThickness: 44 }]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ' ' + fmtDur(perDay[ctx.dataIndex]) } } },
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => activeLens() ? ` ${ctx.dataset.label}: ${fmtDur(Math.round(ctx.parsed.y * 60))}` : ' ' + fmtDur(perDay[ctx.dataIndex]) } } },
       scales: {
-        y: { beginAtZero: true, grid: { color: c.grid }, border: { display: false }, ticks: { color: c.faint, callback: v => v + 'h' } },
-        x: { grid: { display: false }, border: { display: false }, ticks: { color: c.muted } }
+        y: { stacked: !!activeLens(), beginAtZero: true, grid: { color: c.grid }, border: { display: false }, ticks: { color: c.faint, callback: v => v + 'h' } },
+        x: { stacked: !!activeLens(), grid: { display: false }, border: { display: false }, ticks: { color: c.muted } }
       }
     }
   });
 
   // Pie + tag bars
-  const totals = tagTotals(list).map(([t, d]) => [t, d.mins]);
+  const totals = tagTotals(lens(list)).map(([t, d]) => [t, d.mins]), shown = sum(totals, x => x[1]);
   const pieBox = $('#wk-pie-box');
   if (totals.length) {
     if (!pieBox.querySelector('canvas')) pieBox.innerHTML = '<canvas id="wk-pie"></canvas>';
@@ -2982,7 +3017,7 @@ function renderWeekly() {
     pieBox.innerHTML = '<div class="chart-empty">No entries<br>this week</div>';
   }
   $('#wk-cats').innerHTML = totals.length ? totals.map(([t, m]) => {
-    const p = total ? Math.round(m / total * 100) : 0, hex = tagHex(t);
+    const p = shown ? Math.round(m / shown * 100) : 0, hex = tagHex(t);
     return `<div><div class="catbar-top"><span class="catbar-name"><i style="background:${hex}"></i><span>${esc(t)}</span></span><span class="catbar-val">${fmtDur(m)}<em>${p}%</em></span></div>
       <div class="track"><div style="width:${p}%;background:${hex}"></div></div></div>`;
   }).join('') : '<p class="hint">Log activities to see how your week breaks down by tag.</p>';
@@ -3327,17 +3362,20 @@ function renderMonthly() {
     stat('Active days', active, 'days', `of ${daysInMonth} in the month`) +
     stat('Daily average', active ? hrs(total / active) : '0.0', 'hrs', 'per active day');
 
-  const pairs = tagTotals(list).map(([t, d]) => [t, d.mins]);
+  const lensed = lens(list), pairs = tagTotals(lensed).map(([t, d]) => [t, d.mins]), shownMo = sum(pairs, x => x[1]);
   const box = $('#mo-donut-box');
   if (pairs.length) {
     if (!box.querySelector('canvas')) box.innerHTML = '<canvas id="mo-donut"></canvas><div class="donut-center" id="mo-donut-center"></div>';
-    $('#mo-donut-center').innerHTML = `<div><b>${hrs(total)}</b><span>hours</span></div>`;
+    $('#mo-donut-center').innerHTML = `<div><b>${hrs(shownMo)}</b><span>hours</span></div>`;
     makeChart('moDonut', 'mo-donut', pieConfig(pairs, 'doughnut'));
   } else {
     makeChart('moDonut', 'mo-donut', null);
     box.innerHTML = '<div class="chart-empty">No entries this month</div>';
   }
-  $('#mo-table').innerHTML = tagTable(list, 'No entries this month');
+  $('#mo-table').innerHTML = tagTable(lensed, 'No entries this month');
+  const nDays = new Date(y, m + 1, 0).getDate(), mDays = Array.from({ length: nDays }, (_, i) => `${prefix}${pad(i + 1)}`);
+  const tIso = todayISO(), moLast = tIso.startsWith(prefix) ? Number(tIso.slice(8, 10)) - 1 : tIso < prefix ? -1 : nDays - 1;
+  accumChart('moAccum', 'mo-accum', lensed, mDays, e => e.date, mDays.map((_, i) => String(i + 1)), moLast);
 }
 
 /* ---------- Annual ---------- */
@@ -3392,7 +3430,8 @@ function renderAnnual() {
     data: {
       labels: MONTHS,
       datasets: [
-        { type: 'bar', label: 'Hours per month', data: monthMins.map(mm => +(mm / 60).toFixed(1)), backgroundColor: c.accent, borderRadius: 6, maxBarThickness: 38, yAxisID: 'y', order: 2 },
+        ...(activeLens() ? stackSets(lens(list), MONTHS.map((_, i) => i), e => parseInt(String(e.date).slice(5, 7), 10) - 1).map(d => ({ ...d, yAxisID: 'y', order: 2 }))
+          : [{ type: 'bar', label: 'Hours per month', data: monthMins.map(mm => +(mm / 60).toFixed(1)), backgroundColor: c.accent, borderRadius: 6, maxBarThickness: 38, yAxisID: 'y', order: 2 }]),
         { type: 'line', label: 'Cumulative hours', data: cumulative, borderColor: '#0ea5e9', backgroundColor: '#0ea5e9', tension: .3, pointRadius: 3, borderWidth: 2, yAxisID: 'y1', order: 1 },
         { type: 'line', label: 'Goal pace', data: pace, borderColor: '#d97706', borderDash: [6, 6], pointRadius: 0, borderWidth: 2, yAxisID: 'y1', order: 0 }
       ]
@@ -3401,20 +3440,23 @@ function renderAnnual() {
       responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
       plugins: { legend: { position: 'bottom', labels: { color: c.muted, boxWidth: 10, boxHeight: 10, usePointStyle: true, padding: 16 } } },
       scales: {
-        y: { beginAtZero: true, grid: { color: c.grid }, border: { display: false }, ticks: { color: c.faint }, title: { display: true, text: 'Per month', color: c.faint } },
+        y: { stacked: !!activeLens(), beginAtZero: true, grid: { color: c.grid }, border: { display: false }, ticks: { color: c.faint }, title: { display: true, text: 'Per month', color: c.faint } },
         y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false }, border: { display: false }, ticks: { color: c.faint }, title: { display: true, text: 'Cumulative', color: c.faint } },
-        x: { grid: { display: false }, border: { display: false }, ticks: { color: c.muted } }
+        x: { stacked: !!activeLens(), grid: { display: false }, border: { display: false }, ticks: { color: c.muted } }
       }
     }
   });
 
-  $('#yr-table').innerHTML = tagTable(list, 'No entries this year');
+  const yrLensed = lens(list);
+  $('#yr-table').innerHTML = tagTable(yrLensed, 'No entries this year');
+  accumChart('yrAccum', 'yr-accum', yrLensed, MONTHS.map((_, i) => i), e => parseInt(String(e.date).slice(5, 7), 10) - 1, MONTHS, lastMonth);
 }
 
 /* ======================= Settings & data ======================= */
 function openSettings(highlightSync = false) {
   const d = $('#settings');
   $('#set-weekstart').value = String(weekStartDay());
+  applyGoal(); $('#set-goal').value = WEEKLY_GOAL_HOURS;
   $('#set-url').value = getScriptUrl();
   $('#sec-sync').classList.toggle('highlight', !!highlightSync);
   renderTagManager();
@@ -5141,6 +5183,203 @@ function weekOfMonth(days) {
   document.querySelectorAll('dialog').forEach(d => d.addEventListener('close', release));
 }
 
+/* =====================================================================
+   v3.4: adjustable weekly goal, and the tag fills in the subject.
+   ===================================================================== */
+// Weekly goal in hours (Settings › Preferences). Synced with your other settings; the yearly goal is 52 weeks of it.
+function applyGoal() {
+  const g = Number(cfg().weeklyGoal);
+  WEEKLY_GOAL_HOURS = g > 0 ? g : 40;
+  ANNUAL_GOAL_HOURS = Math.round(WEEKLY_GOAL_HOURS * 52);
+}
+// Choosing a tag fills in the subject (e.g. "Prayer Mtg (PM)" → "Prayer Mtg"), unless you've already typed your own.
+const tagSubject = t => String(t || '').replace(/\s*\([^)]*\)\s*$/, '').trim();
+function autoSubject(sel, input, key) {
+  const t = $(sel).value;
+  if (!t || t === '__new__') return;
+  const cur = $(input).value.trim();
+  if (!cur || cur === ui[key]) { $(input).value = tagSubject(t); ui[key] = $(input).value; }
+}
+function bindV34() {
+  $('#f-tag').addEventListener('change', () => autoSubject('#f-tag', '#f-subject', 'autoSubj'));
+  $('#p-tag').addEventListener('change', () => autoSubject('#p-tag', '#p-title', 'autoTitle'));
+  $('#set-goal').addEventListener('change', e => {
+    const v = Math.min(168, Math.max(1, Math.round((+e.target.value || 40) * 2) / 2));
+    e.target.value = v;
+    saveCfg({ weeklyGoal: v });
+    applyGoal(); renderView();
+    toast(`Weekly goal set to ${v} hours (${Math.round(v * 52).toLocaleString()} a year).`);
+  });
+}
+
+/* =====================================================================
+   v3.5: Chart views. Saved groupings of tags (e.g. "Truth Pursuit" =
+   TP + Bible reading + Campus Work) that change how the Weekly, Monthly
+   and Annual charts add things up. Tags and entries are never changed.
+   ===================================================================== */
+const LENS_KEY = 'ts_chart_view_v1';
+const LENS_HEX = {};
+const LENS_PALETTE = ['#0d9488', '#7c3aed', '#ea580c', '#2563eb', '#db2777', '#65a30d', '#ca8a04', '#0891b2'];
+const chartViews = () => Array.isArray(cfg().chartViews) ? cfg().chartViews : [];
+const activeLens = () => chartViews().find(v => v.id === lsRaw(LENS_KEY)) || null;
+// Returns the entries as the chosen view sees them: each grouped tag is renamed to its group.
+function lens(list) {
+  Object.keys(LENS_HEX).forEach(k => delete LENS_HEX[k]);
+  const v = activeLens();
+  if (!v) return list;
+  const map = {};
+  v.groups.forEach((g, i) => {
+    const hex = g.color || (g.tags[0] ? tagHex(g.tags[0]) : LENS_PALETTE[i % LENS_PALETTE.length]);
+    g.tags.forEach(t => { map[t] = g.name; });
+    LENS_HEX[g.name] = hex;
+  });
+  if (v.rest === 'other') LENS_HEX.Other = '#9b968a';
+  const out = [];
+  list.forEach(e => {
+    const g = map[e.tag];
+    if (g) out.push({ ...e, tag: g });
+    else if (v.rest === 'other') out.push({ ...e, tag: 'Other' });
+    else if (v.rest !== 'hide') out.push(e);
+  });
+  return out;
+}
+function renderLensBars() {
+  const cur = activeLens(), views = chartViews();
+  const html = `<span class="lens-label">${icon('pie', 'sm')}Chart view</span>
+    <button data-lens="" class="${!cur ? 'on' : ''}">By tag</button>` +
+    views.map(v => `<button data-lens="${esc(v.id)}" class="${cur && cur.id === v.id ? 'on' : ''}">${esc(v.name)}</button>`).join('') +
+    `<button class="lens-edit" data-lens-manage>${icon(views.length ? 'pencil' : 'plus', 'xs')}${views.length ? 'Edit views' : 'New view'}</button>`;
+  $$('[data-lensbar]').forEach(b => { b.innerHTML = html; });
+}
+// Stacked bars by group (used when a view is chosen)
+function stackSets(list, buckets, bucketOf) {
+  const totals = tagTotals(list).map(([t]) => t);
+  return totals.map(t => ({
+    type: 'bar', label: t, stack: 's',
+    data: buckets.map(bk => +(sum(list.filter(e => e.tag === t && bucketOf(e) === bk), e => e.totalMinutes) / 60).toFixed(2)),
+    backgroundColor: tagHex(t), borderRadius: 3, maxBarThickness: 40
+  }));
+}
+// "Accumulated hours": a running total for each group (or tag) through the period
+function accumChart(key, canvasId, list, buckets, bucketOf, labels, lastIdx) {
+  const c = themeColors(), names = tagTotals(list).map(([t]) => t).slice(0, 8);
+  const sets = names.map(t => {
+    let run = 0;
+    return { type: 'line', label: t, borderColor: tagHex(t), backgroundColor: tagHex(t), tension: .25, pointRadius: buckets.length > 14 ? 0 : 3, borderWidth: 2.2,
+      data: buckets.map((bk, i) => { run += sum(list.filter(e => e.tag === t && bucketOf(e) === bk), e => e.totalMinutes) / 60; return i <= lastIdx ? +run.toFixed(1) : null; }) };
+  });
+  makeChart(key, canvasId, sets.length ? {
+    type: 'line', data: { labels, datasets: sets },
+    options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { position: 'bottom', labels: { color: c.muted, boxWidth: 10, boxHeight: 10, usePointStyle: true, padding: 14 } },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y == null ? '—' : fmtDur(Math.round(ctx.parsed.y * 60))}` } } },
+      scales: { y: { beginAtZero: true, grid: { color: c.grid }, border: { display: false }, ticks: { color: c.faint, callback: v => v + 'h' } },
+                x: { grid: { display: false }, border: { display: false }, ticks: { color: c.muted, maxRotation: 0, autoSkip: true, maxTicksLimit: 12 } } } }
+  } : null);
+  const canvas = document.getElementById(canvasId);
+  if (canvas) canvas.parentElement.classList.toggle('is-empty', !sets.length);
+}
+
+/* ------------------------------ Manage views ------------------------------ */
+function openLensManager() {
+  const views = chartViews();
+  if (!views.length) return editLens(null);
+  $('#lens-dlg-title').textContent = 'Chart views';
+  $('#lens-body').innerHTML = `<p class="hint" style="font-size:13px;color:var(--muted)">Group tags for the Weekly, Monthly and Annual charts. Your tags and entries don’t change.</p>
+    <div class="tag-list">${views.map(v => `<div class="tag-row"><span class="name">${esc(v.name)}</span>
+      <span class="count">${plural(v.groups.length, 'group', 'groups')}</span>
+      <button class="btn-icon" data-lens-edit="${esc(v.id)}" aria-label="Edit ${esc(v.name)}">${icon('pencil', 'sm')}</button></div>`).join('')}</div>
+    <div class="btn-row"><button class="btn btn-primary" data-lens-new>${icon('plus', 'sm')}New view</button></div>`;
+  const d = $('#lens-dlg'); if (!d.open) d.showModal();
+}
+function editLens(id) {
+  const v = chartViews().find(x => x.id === id);
+  const tp = findTag('TP'), br = categories.find(c => /bible reading/i.test(c));
+  ui.lensEdit = v ? JSON.parse(JSON.stringify(v)) : {
+    id: 'v' + Date.now().toString(36), name: chartViews().length ? 'New view' : 'Truth Pursuit',
+    groups: [{ name: tp ? tagSubject(tp) : 'Group 1', tags: [tp, br].filter(Boolean) }], rest: 'separate'
+  };
+  ui.lensIsNew = !v;
+  renderLensEditor();
+  const d = $('#lens-dlg'); if (!d.open) d.showModal();
+}
+function renderLensEditor() {
+  const L = ui.lensEdit, owner = {};
+  L.groups.forEach((g, gi) => g.tags.forEach(t => { owner[t] = gi; }));
+  $('#lens-dlg-title').textContent = ui.lensIsNew ? 'New chart view' : 'Edit chart view';
+  $('#lens-body').innerHTML = `
+    <label class="field"><span>View name</span><input type="text" id="lens-name" value="${esc(L.name)}" autocomplete="off"></label>
+    ${L.groups.map((g, gi) => `<div class="lens-group">
+      <div class="lens-group-head"><input type="text" data-lens-gname="${gi}" value="${esc(g.name)}" aria-label="Group name" placeholder="Group name">
+        <button type="button" class="btn-icon danger" data-lens-gdel="${gi}" aria-label="Remove group">${icon('trash', 'sm')}</button></div>
+      <div class="lens-tags">${categories.map(t => {
+        const mine = owner[t] === gi, other = owner[t] !== undefined && !mine;
+        return `<button type="button" class="lens-tag${mine ? ' on' : ''}${other ? ' taken' : ''}" data-lens-tag="${gi}" data-tag="${esc(t)}" style="--c:${tagHex(t)}" title="${other ? 'In “' + esc(L.groups[owner[t]].name) + '”; tap to move it here' : ''}"><i></i>${esc(t)}</button>`;
+      }).join('')}</div></div>`).join('')}
+    <button type="button" class="btn btn-sm" data-lens-gadd style="align-self:flex-start">${icon('plus', 'sm')}Add a group</button>
+    <label class="field"><span>Tags not in a group</span><select id="lens-rest">
+      <option value="separate"${L.rest === 'separate' ? ' selected' : ''}>Show each on its own</option>
+      <option value="other"${L.rest === 'other' ? ' selected' : ''}>Combine them as “Other”</option>
+      <option value="hide"${L.rest === 'hide' ? ' selected' : ''}>Leave them out of the charts</option></select></label>
+    <div class="btn-row">
+      <button type="button" class="btn btn-primary" data-lens-save>Save view</button>
+      ${ui.lensIsNew ? '' : `<button type="button" class="btn btn-danger-ghost" data-lens-del>${icon('trash', 'sm')}Delete view</button>`}
+    </div>`;
+}
+function readLensForm() {
+  const L = ui.lensEdit;
+  L.name = ($('#lens-name') || {}).value || L.name;
+  $$('[data-lens-gname]').forEach(i => { L.groups[+i.dataset.lensGname].name = i.value; });
+  if ($('#lens-rest')) L.rest = $('#lens-rest').value;
+}
+function saveLens() {
+  readLensForm();
+  const L = ui.lensEdit;
+  L.name = L.name.trim(); L.groups = L.groups.map(g => ({ ...g, name: g.name.trim() })).filter(g => g.name && g.tags.length);
+  if (!L.name) return toast('Name the view first.', true);
+  if (!L.groups.length) return toast('Add at least one group with a tag in it.', true);
+  if (new Set(L.groups.map(g => g.name.toLowerCase())).size !== L.groups.length) return toast('Give each group a different name.', true);
+  const views = chartViews().filter(v => v.id !== L.id);
+  const i = chartViews().findIndex(v => v.id === L.id);
+  if (i >= 0) views.splice(i, 0, L); else views.push(L);
+  saveCfg({ chartViews: views });
+  lsRawSet(LENS_KEY, L.id);
+  $('#lens-dlg').close();
+  renderView(); toast(`“${L.name}” saved.`);
+}
+async function deleteLens() {
+  const L = ui.lensEdit;
+  const ok = await ask({ title: `Delete “${L.name}”?`, message: 'Only this chart view is removed. Your tags and entries stay as they are.', confirmText: 'Delete view', danger: true });
+  if (!ok) return;
+  saveCfg({ chartViews: chartViews().filter(v => v.id !== L.id) });
+  if (lsRaw(LENS_KEY) === L.id) lsRawSet(LENS_KEY, '');
+  $('#lens-dlg').close(); renderView(); toast('Chart view deleted.');
+}
+function bindLens() {
+  document.addEventListener('click', e => {
+    const t = e.target;
+    const pick = t.closest('[data-lens]');
+    if (pick) { lsRawSet(LENS_KEY, pick.dataset.lens); renderView(); return; }
+    if (t.closest('[data-lens-manage]')) return openLensManager();
+    if (t.closest('[data-lens-new]')) return editLens(null);
+    const ed = t.closest('[data-lens-edit]'); if (ed) return editLens(ed.dataset.lensEdit);
+    const tg = t.closest('[data-lens-tag]');
+    if (tg) {
+      readLensForm();
+      const gi = +tg.dataset.lensTag, tag = tg.dataset.tag, g = ui.lensEdit.groups[gi];
+      if (g.tags.includes(tag)) g.tags = g.tags.filter(x => x !== tag);
+      else { ui.lensEdit.groups.forEach(o => { o.tags = o.tags.filter(x => x !== tag); }); g.tags.push(tag); }
+      return renderLensEditor();
+    }
+    if (t.closest('[data-lens-gadd]')) { readLensForm(); ui.lensEdit.groups.push({ name: '', tags: [] }); renderLensEditor(); const ins = $$('[data-lens-gname]'); ins[ins.length - 1].focus(); return; }
+    const gd = t.closest('[data-lens-gdel]'); if (gd) { readLensForm(); ui.lensEdit.groups.splice(+gd.dataset.lensGdel, 1); return renderLensEditor(); }
+    if (t.closest('[data-lens-save]')) return saveLens();
+    if (t.closest('[data-lens-del]')) return deleteLens();
+  });
+  const d = $('#lens-dlg');
+  d.addEventListener('click', e => { if (e.target === d || e.target.closest('[data-close]')) d.close(); });
+}
+
 /* ============================ Start ============================ */
 function init() {
   loadLocalState();
@@ -5149,6 +5388,8 @@ function init() {
   bindHeartBody();
   bindGarden();
   bindAttendees();
+  bindV34();
+  bindLens();
   renderTagOptions();
   resetFoodForm();
   resetForm();
