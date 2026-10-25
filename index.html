@@ -508,6 +508,38 @@ code { font-size: 12px; background: var(--surface-2); padding: 1px 5px; border-r
   :root:not([data-theme="light"])[data-realm="body"]  { --accent: #fb923c; --accent-hover: #fdba74; --accent-text: #3a1404; --accent-soft: rgba(251, 146, 60, .16); --accent-softer: rgba(251, 146, 60, .06); --ring: rgba(251, 146, 60, .3); }
 }
 .brand-mark { transition: background .2s, color .2s; }
+.wo-tag-hint { margin: -4px 0 2px; font-size: 12.5px; }
+#bd-confirm { margin-bottom: 18px; }
+
+/* Calendar day picker */
+.dp-btn { gap: 6px; }
+.dp-btn .dp-caret { width: 13px; height: 13px; stroke-width: 2.2; opacity: .6; margin-right: -3px; }
+.dp-btn[aria-expanded="true"] { border-color: var(--accent); color: var(--accent); }
+.dp-pop { position: absolute; z-index: 80; width: 292px; padding: 12px 12px 10px; background: var(--surface); color: var(--text);
+  border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 14px 40px rgba(0,0,0,.16), 0 2px 6px rgba(0,0,0,.06); animation: dp-in .14s ease-out; }
+@keyframes dp-in { from { opacity: 0; transform: translateY(-4px); } }
+.dp-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.dp-head b { font-family: var(--serif); font-size: 16px; font-weight: 600; }
+.dp-head .btn-icon { width: 32px; height: 32px; }
+.dp-dow, .dp-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
+.dp-dow span { text-align: center; font-size: 11px; font-weight: 600; color: var(--faint); text-transform: uppercase; letter-spacing: .04em; padding: 4px 0; }
+.dp-grid { row-gap: 2px; }
+.dp-grid button { position: relative; height: 36px; border: 0; background: none; color: var(--text); font: inherit; font-size: 13.5px; font-variant-numeric: tabular-nums; border-radius: 10px; cursor: pointer; }
+.dp-grid button:hover { background: var(--surface-2); }
+.dp-grid button:focus-visible { outline: 2px solid var(--ring); outline-offset: 1px; }
+.dp-grid button.range { background: var(--accent-soft); border-radius: 0; }
+.dp-grid button.r-start { border-radius: 10px 0 0 10px; }
+.dp-grid button.r-end { border-radius: 0 10px 10px 0; }
+.dp-grid button.r-start.r-end { border-radius: 10px; }
+.dp-grid button.today { font-weight: 700; color: var(--accent); box-shadow: inset 0 0 0 1.5px var(--accent); border-radius: 10px; }
+.dp-grid button.on { background: var(--accent); color: var(--accent-text); font-weight: 700; box-shadow: none; }
+.dp-grid button.has::after { content: ""; position: absolute; left: 50%; bottom: 4px; width: 4px; height: 4px; margin-left: -2px; border-radius: 50%; background: var(--accent); }
+.dp-grid button.on.has::after { background: var(--accent-text); }
+.dp-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+.dp-key { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--muted); min-width: 0; }
+.dp-key i { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); flex: none; }
+.day.dp-flash { animation: dp-flash 1.6s ease-out; border-radius: 12px; }
+@keyframes dp-flash { 0%, 30% { box-shadow: 0 0 0 3px var(--ring); background: var(--accent-softer); } 100% { box-shadow: 0 0 0 0 transparent; } }
 
 /* Verse card + references follow the page color (Spirit green, Heart burgundy, Body orange, Living) */
 :root:root:root .verse { background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 9%, var(--surface)), var(--surface) 70%); border-color: color-mix(in srgb, var(--accent) 22%, var(--border)); }
@@ -1149,6 +1181,7 @@ input, textarea, select { scroll-margin-top: 96px; scroll-margin-bottom: 120px; 
       </div>
     </div>
     <div class="notice hidden rec-notice"></div>
+    <div class="card confirm-card hidden" id="bd-confirm"></div>
     <div class="stats" id="bd-stats"></div>
     <div class="log-layout">
       <form id="food-form" class="card form-card" novalidate>
@@ -1343,7 +1376,7 @@ input, textarea, select { scroll-margin-top: 96px; scroll-margin-bottom: 120px; 
       <div class="pref-row"><span>Weekly goal <em class="mini">· hours</em></span>
         <input type="number" id="set-goal" min="1" max="168" step="0.5" inputmode="decimal" aria-label="Weekly goal in hours" style="width:120px;flex:none">
       </div>
-      <p class="hint">Sets the weekly plant in Spirit and the yearly outlook (52 weeks of it). Lower it if you work or study; it syncs to your other devices.</p>
+      <p class="hint">Sets the weekly plant in Spirit and the yearly outlook (52 weeks of it). Only tags marked “Walking with the Lord” in Settings › Tags count toward it. Lower it if you work or study; it syncs to your other devices.</p>
       <div class="switch-row"><div class="sw-text"><b>Show goals and percentages</b><span>Turn off to hide the weekly goal, the yearly outlook and goal percentages, so the app shows your time without measuring it against a target.</span></div>
         <label class="switch"><input type="checkbox" id="set-showgoals" aria-label="Show goals and percentages"><i></i></label></div>
       <div class="switch-row"><div class="sw-text"><b>Show conscience in charts</b><span>Turn off to keep your conscience readings out of Heart Trends and Living. You can still take readings in the journal.</span></div>
@@ -1493,6 +1526,11 @@ input, textarea, select { scroll-margin-top: 96px; scroll-margin-bottom: 120px; 
         <label class="field"><span>Date</span><input type="date" id="wo-date"></label>
         <label class="field"><span>Type</span><select id="wo-type"></select></label>
       </div>
+      <div class="row2">
+        <label class="field"><span>Start time <em>· optional</em></span><input type="time" id="wo-start"></label>
+        <label class="field"><span>Spirit tag</span><select id="wo-tag"></select></label>
+      </div>
+      <p class="hint wo-tag-hint" id="wo-tag-hint"></p>
       <label class="field"><span>Title <em>· optional</em></span><input type="text" id="wo-title" placeholder="e.g., Easy run around the park" autocomplete="off"></label>
       <div class="row2">
         <label class="field"><span>Duration <em>min</em></span><input type="number" id="wo-min" min="0" step="1" inputmode="numeric" placeholder="0"></label>
@@ -2437,7 +2475,8 @@ const DEFAULT_CATEGORIES = [
 const TAG_HEX = {
   "Campus Work (CW)": '#8b5cf6', "Gospelizing (GP)": '#10b981', "Lord's Day (LD)": '#f59e0b',
   "Prayer Mtg (PM)": '#3b82f6', "Coordination Mtg (CM)": '#6366f1', "Fellowship / Mutual Shepherding (MS)": '#a855f7',
-  "Small Group Mtg (VG)": '#f43f5e', "Truth Pursuit (TP)": '#14b8a6', "Personal Time with the Lord (PTL)": '#0ea5e9'
+  "Small Group Mtg (VG)": '#f43f5e', "Truth Pursuit (TP)": '#14b8a6', "Personal Time with the Lord (PTL)": '#0ea5e9',
+  "Body Life (BL)": '#ea580c'
 };
 const PALETTE = ['#ea580c', '#0891b2', '#65a30d', '#db2777', '#ca8a04', '#7c3aed', '#0d9488', '#dc2626', '#2563eb', '#9333ea', '#16a34a', '#c026d3'];
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -2906,7 +2945,7 @@ function renderLog() {
       (a.startTime || '99:99').localeCompare(b.startTime || '99:99') || String(a.createdAt || '').localeCompare(String(b.createdAt || '')));
     const d = parseDate(date);
     const label = d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
-    return `<div class="day">
+    return `<div class="day" data-day="${date}">
       <div class="day-head"><div class="day-name">${label}${date === today ? '<span class="today-tag">Today</span>' : ''}</div>
       <div class="day-total">${fmtDur(sum(items, e => e.totalMinutes))}</div></div>
       ${items.map(entryRow).join('')}
@@ -3144,13 +3183,13 @@ function renderWeekly() {
   const list = entries.filter(e => e.date >= first && e.date <= last);
   const total = sum(list, e => e.totalMinutes);
   const active = new Set(list.map(e => e.date)).size;
-  const goalPct = Math.round(total / 60 / WEEKLY_GOAL_HOURS * 100);
+  const goalMins = walkMins(list);
 
   $('#wk-stats').innerHTML =
     stat('Total hours', hrs(total), 'hrs', `${fmtDur(total)} logged`, 'accent') +
     stat('Daily average', active ? hrs(total / active) : '0.0', 'hrs', `across ${plural(active, 'active day', 'active days')}`) +
     stat('Entries', list.length, '', `${plural(list.filter(e => e.startTime).length, 'with a set time', 'with set times')}`) +
-    (showGoals() ? plantTile(`${WEEKLY_GOAL_HOURS}-hour goal`, total / 60 / WEEKLY_GOAL_HOURS, `${hrs(total)} of ${WEEKLY_GOAL_HOURS} hrs`, 'week' + ui.sumWeek)
+    (showGoals() ? plantTile(`${WEEKLY_GOAL_HOURS}-hour goal`, goalMins / 60 / WEEKLY_GOAL_HOURS, `${hrs(goalMins)} of ${WEEKLY_GOAL_HOURS} hrs walking with the Lord`, 'week' + ui.sumWeek)
       : stat('Walking with the Lord', hrs(walkMins(list)), 'hrs', 'this week'));
 
   // Hours per day
@@ -3344,6 +3383,7 @@ function renderConfirm() {
 }
 function confirmOcc(o, quiet = false) {
   const p = o.plan;
+  if (isBodyTag(p.tag)) { if (!quiet) openWorkout(null, occWorkoutPrefill(o)); return false; }
   if (!p.tag) { if (!quiet) adjustOcc(o); return false; }
   if (!categories.includes(p.tag)) { categories.push(p.tag); queueOp({ type: 'categories', categories: [p.tag] }); }
   localUpsert({ id: o.entryId, date: o.date, subject: p.title, totalMinutes: o.mins, tag: p.tag, description: [p.agenda, p.notes].filter(Boolean).join('\n\n'),
@@ -3357,10 +3397,11 @@ function confirmAll() {
   due.forEach(o => { if (confirmOcc(o, true)) n++; });
   persistLocal(); renderAll(); syncNow();
   const left = due.length - n;
-  toast(left ? `Logged ${plural(n, 'activity', 'activities')}. ${left} need a tag first.` : `Logged ${plural(n, 'activity', 'activities')}.`, !!left && !n);
+  toast(left ? `Logged ${plural(n, 'activity', 'activities')}. ${left} still need a tag or workout details.` : `Logged ${plural(n, 'activity', 'activities')}.`, !!left && !n);
 }
 function adjustOcc(o) {
   const p = o.plan;
+  if (isBodyTag(p.tag)) return openWorkout(null, occWorkoutPrefill(o));
   const pop = ui.view !== 'log' || narrowScreen();
   resetForm();
   ui.planEntryId = o.entryId;
@@ -3561,26 +3602,27 @@ function renderAnnual() {
     stat('Active days', active, 'days', '') +
     stat('Busiest month', best >= 0 ? MONTHS_LONG[best] : '—', '', best >= 0 ? `${hrs(monthMins[best])} hrs` : '');
 
-  // Goal outlook
+  // Goal outlook (only "Walking with the Lord" tags count toward the goal)
+  const goalHours = walkMins(list) / 60;
   const goal = ANNUAL_GOAL_HOURS, today = new Date();
   const isCurrent = today.getFullYear() === year, isPast = year < today.getFullYear();
   const daysInYear = ((year % 4 === 0 && year % 100 !== 0) || year % 400 === 0) ? 366 : 365;
   const elapsed = isCurrent ? Math.floor((new Date(today.getFullYear(), today.getMonth(), today.getDate()) - new Date(year, 0, 1)) / 86400000) + 1 : (isPast ? daysInYear : 0);
-  const pct = Math.round(totalHours / goal * 100);
-  $('#yr-goal-text').textContent = `${Math.round(totalHours).toLocaleString()} of ${goal.toLocaleString()} hrs · ${pct}%`;
+  const pct = Math.round(goalHours / goal * 100);
+  $('#yr-goal-text').textContent = `${Math.round(goalHours).toLocaleString()} of ${goal.toLocaleString()} hrs · ${pct}%`;
   $('#yr-goal-bar').style.width = Math.min(100, pct) + '%';
   let outlook;
   if (isCurrent && elapsed > 0) {
-    const projected = totalHours / elapsed * daysInYear, perWeek = totalHours / elapsed * 7, remainingWeeks = (daysInYear - elapsed) / 7;
+    const projected = goalHours / elapsed * daysInYear, perWeek = goalHours / elapsed * 7, remainingWeeks = (daysInYear - elapsed) / 7;
     outlook = `At your current pace of <b>${perWeek.toFixed(1)} hrs/week</b>, you’re heading for about <b>${Math.round(projected).toLocaleString()} hrs</b> by December 31 (${Math.round(projected / goal * 100)}% of goal). `;
     if (projected >= goal) outlook += 'You’re on track to reach your goal.';
-    else if (remainingWeeks > 0) outlook += `To reach ${goal.toLocaleString()} hrs you’d need about <b>${((goal - totalHours) / remainingWeeks).toFixed(1)} hrs/week</b> for the rest of the year.`;
+    else if (remainingWeeks > 0) outlook += `To reach ${goal.toLocaleString()} hrs you’d need about <b>${((goal - goalHours) / remainingWeeks).toFixed(1)} hrs/week</b> for the rest of the year.`;
   } else if (isPast) {
-    outlook = `Year complete: <b>${Math.round(totalHours).toLocaleString()} hrs</b> logged, ${pct}% of the ${goal.toLocaleString()}-hour goal.`;
+    outlook = `Year complete: <b>${Math.round(goalHours).toLocaleString()} hrs</b> logged, ${pct}% of the ${goal.toLocaleString()}-hour goal.`;
   } else {
     outlook = 'This year hasn’t started yet.';
   }
-  $('#yr-outlook').innerHTML = outlook;
+  $('#yr-outlook').innerHTML = outlook + (showGoals() ? ' <span class="hint">Counts tags marked Walking with the Lord.</span>' : '');
   $('#yr-goal-text').closest('.card').classList.toggle('hidden', !showGoals());
 
   // Month tiles (tap to open that month)
@@ -4352,6 +4394,7 @@ const checkFor = d => recList('check').find(r => r.date === d && (recs['check_' 
 const healthFor = d => recList('health').filter(r => r.date === d).sort((a, b) => isSample(a.id) - isSample(b.id))[0] || null;
 
 function renderBodyDay() {
+  renderBodyConfirm();
   const d = ui.bDate, c = cfg();
   $('#bd-rel').textContent = dayRel(d);
   $('#bd-title').textContent = longDay(d);
@@ -4743,9 +4786,17 @@ function openWorkout(id, prefill = {}) {
   $('#wo-type').value = type;
   $('#wo-date').value = (w && w.date) || prefill.date || (ui.view === 'body' ? ui.bDate : todayISO());
   $('#wo-title').value = (w && w.title) || prefill.title || '';
+  $('#wo-start').value = (w && (w.startTime || '')) || prefill.startTime || '';
+  ui.woEntryId = w ? '' : (prefill.entryId || '');
+  const woTag = w ? (w.tag !== undefined ? w.tag : '') : (prefill.tag !== undefined ? prefill.tag : bodyLifeTag());
+  const tagOpts = categories.slice(); if (woTag && !tagOpts.includes(woTag)) tagOpts.push(woTag);
+  if (!tagOpts.includes(bodyLifeTag())) tagOpts.unshift(bodyLifeTag());
+  $('#wo-tag').innerHTML = tagOpts.map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join('') + '<option value="">None (keep off the timesheet)</option>';
+  $('#wo-tag').value = woTag;
+  woTagHint();
   $('#wo-min').value = w && w.minutes ? w.minutes : (prefill.minutes || '');
   $('#wo-dist').value = w && w.distanceKm ? +kmTo(w.distanceKm).toFixed(2) : (prefill.km ? niceDist(prefill.km) : '');
-  $('#wo-notes').value = (w && w.notes) || '';
+  $('#wo-notes').value = (w && w.notes) || prefill.notes || '';
   $('#wo-dunit').textContent = dU(); $('#wo-wunit').textContent = (w && w.weightUnit) || wU();
   ui.woFeel = w ? (+w.feel || 0) : 0; renderFeel();
   const ex = w && Array.isArray(w.exercises) ? w.exercises : [];
@@ -4753,6 +4804,7 @@ function openWorkout(id, prefill = {}) {
   const s = ui.woSession && ui.sessions[ui.woSession];
   $('#wo-session').classList.toggle('hidden', !s);
   if (s) $('#wo-session').innerHTML = `<b>From your plan:</b> ${esc(s.title)}. ${esc(s.detail || '')}`;
+  if (!s && prefill.note) { $('#wo-session').classList.remove('hidden'); $('#wo-session').innerHTML = prefill.note; }
   $('#wo-delete').classList.toggle('hidden', !w);
   woTrackUpdate();
   $('#wo-dlg').showModal();
@@ -4792,9 +4844,13 @@ function saveWorkout(ev) {
   if (!date) return toast('Choose a date.', true);
   if (!minutes && !km && !exercises.length) return toast('Add a duration, distance or exercise.', true);
   const prev = ui.editWo ? recs[ui.editWo] : null;
-  recPut({ ...(prev || {}), id: prev ? prev.id : newId('wo'), kind: 'workout', date, time: prev ? prev.time : nowHM(), type,
+  const woId = prev ? prev.id : newId('wo');
+  recPut({ ...(prev || {}), id: woId, kind: 'workout', date, time: prev ? prev.time : nowHM(), type,
     title: $('#wo-title').value.trim(), minutes, distanceKm: km, feel: ui.woFeel || 0, exercises, weightUnit: wU(),
-    notes: $('#wo-notes').value.trim(), sessionId: ui.woSession || '' });
+    notes: $('#wo-notes').value.trim(), sessionId: ui.woSession || '',
+    startTime: $('#wo-start').value || woAutoStart(date, minutes), tag: $('#wo-tag').value, entryId: prev ? (prev.entryId || '') : (ui.woEntryId || '') });
+  ui.woEntryId = '';
+  syncWorkoutEntry(recs[woId]);
   $('#wo-dlg').close();
   toast(prev ? 'Workout updated.' : 'Workout logged. Well done.');
   renderView(); syncSoon();
@@ -4806,6 +4862,7 @@ async function deleteRecord(id) {
     const ok = await ask({ title: `Delete this ${what}?`, message: 'It will be removed on all your synced devices.', confirmText: 'Delete', danger: true });
     if (!ok) return;
   }
+  if (r.kind === 'workout' && r.entryId && store[r.entryId] && !store[r.entryId].deleted) { localDelete(r.entryId); persistLocal(); renderAll(); }
   recDel(id);
   if ($('#wo-dlg').open && ui.editWo === id) $('#wo-dlg').close();
   if (ui.editMeal === id) resetFoodForm();
@@ -5214,7 +5271,7 @@ function plantTile(label, p, sub, key) {
 // When the week first reaches its goal, celebrate once.
 function checkWeekBloom() {
   const days = weekDays(0), first = isoDate(days[0]), last = isoDate(days[6]);
-  const total = sum(realEntries().filter(e => e.date >= first && e.date <= last), e => e.totalMinutes);
+  const total = walkMins(realEntries().filter(e => e.date >= first && e.date <= last));
   if (!showGoals() || total / 60 < WEEKLY_GOAL_HOURS || lsRaw('ts_bloom_week_v1') === first) return;
   lsRawSet('ts_bloom_week_v1', first);
   toast(`${WEEKLY_GOAL_HOURS} hours this week. “${GOAL_VERSE.text}” ${GOAL_VERSE.ref}`);
@@ -5814,8 +5871,8 @@ function renderLivingWeek() {
   const runKm = W.wos.filter(w => isRunType(w.type, c.program)).reduce((a, w) => a + (+w.distanceKm || 0), 0);
   const jDays = recList('journal').filter(j => j.date >= W.first && j.date <= W.last && hasText(j)).length;
   $('#lw-stats').innerHTML =
-    stat('Walking with the Lord', hrs(walk), 'hrs', walkPrev || walk ? `${delta >= 0 ? '+' : '−'}${fmtDur(Math.abs(delta))} vs. the week before` : 'nothing logged yet', 'accent') +
-    stat('Spirit time', hrs(total), 'hrs', showGoals() ? `of your ${WEEKLY_GOAL_HOURS}-hour goal` : plural(W.list.length, 'entry', 'entries')) +
+    stat('Walking with the Lord', hrs(walk), 'hrs', (showGoals() ? `${Math.round(walk / 60 / WEEKLY_GOAL_HOURS * 100)}% of your ${WEEKLY_GOAL_HOURS}-hour goal · ` : '') + (walkPrev || walk ? `${delta >= 0 ? '+' : '−'}${fmtDur(Math.abs(delta))} vs. the week before` : 'nothing logged yet'), 'accent') +
+    stat('All Spirit time', hrs(total), 'hrs', plural(W.list.length, 'entry', 'entries') + ', every tag') +
     (showConscience() ? stat('Conscience', W.reads.length ? avgLevel(W.reads).toFixed(1) : '—', '', W.reads.length ? `average · ${LEVELS[Math.round(avgLevel(W.reads))].name}` : 'no readings') : stat('Journal', jDays, '', 'days written')) +
     stat('Training', W.wos.length, '', `${plural(W.wos.length, 'session', 'sessions')}${runKm ? ` · ${fmtDist(runKm)} run` : ''}`);
 
@@ -5971,6 +6028,239 @@ function bindLiving() {
   if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) navigator.serviceWorker.register('sw.js').catch(() => {});
 }
 
+/* --------------------------- Calendar day picker --------------------------- */
+// The "Today" / "This week" buttons open a small month calendar. Dots mark days that have something logged.
+const DP_TRIGGERS = '[data-nav="log:0"],[data-nav="wk:0"],[data-dnav="heart:0"],[data-dnav="body:0"]';
+let dp = null; // { ctx, btn, y, m, el }
+
+function dpContext(btn) {
+  const v = btn.dataset.nav || btn.dataset.dnav;
+  return v.split(':')[0]; // log | wk | heart | body
+}
+function dpSelected(ctx) {
+  if (ctx === 'heart') return { day: ui.hDate };
+  if (ctx === 'body') return { day: ui.bDate };
+  const days = weekDays(ctx === 'log' ? ui.logWeek : ui.sumWeek);
+  return { from: isoDate(days[0]), to: isoDate(days[6]) };
+}
+function dpMarked(ctx) {
+  const set = new Set();
+  const add = r => { if (r && r.date) set.add(r.date); };
+  if (ctx === 'heart') { recList('journal').forEach(add); recList('conscience').forEach(add); }
+  else if (ctx === 'body') { recList('meal').forEach(add); recList('workout').forEach(add); recList('check').forEach(add); }
+  else entries.forEach(add);
+  return set;
+}
+function dpRender() {
+  if (!dp) return;
+  const { ctx, y, m } = dp, today = todayISO(), sel = dpSelected(ctx), marked = dpMarked(ctx);
+  const ws = weekStartDay(), first = new Date(y, m, 1), lead = (first.getDay() - ws + 7) % 7;
+  const inMonth = new Date(y, m + 1, 0).getDate();
+  const cells = [];
+  for (let i = 0; i < lead; i++) cells.push('<span></span>');
+  for (let d = 1; d <= inMonth; d++) {
+    const iso = isoDate(new Date(y, m, d));
+    const on = sel.day ? sel.day === iso : false;
+    const inRange = sel.from ? iso >= sel.from && iso <= sel.to : false;
+    const cls = [on && 'on', inRange && 'range', inRange && iso === sel.from && 'r-start', inRange && iso === sel.to && 'r-end', iso === today && 'today', marked.has(iso) && 'has'].filter(Boolean).join(' ');
+    const label = new Date(y, m, d).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+    cells.push(`<button type="button" class="${cls}" data-dp-day="${iso}" aria-label="${label}"${on ? ' aria-current="date"' : ''}>${d}</button>`);
+  }
+  const heads = Array.from({ length: 7 }, (_, i) => `<span>${DAY_NAMES[(i + ws) % 7].slice(0, 2)}</span>`).join('');
+  const what = ctx === 'heart' ? 'journal or conscience entries' : ctx === 'body' ? 'meals, workouts or check-ins' : 'logged time';
+  dp.el.innerHTML = `<div class="dp-head">
+      <button type="button" class="btn-icon" data-dp-mo="-1" aria-label="Previous month">${icon('left')}</button>
+      <b>${MONTHS_LONG[m]} ${y}</b>
+      <button type="button" class="btn-icon" data-dp-mo="1" aria-label="Next month">${icon('right')}</button>
+    </div>
+    <div class="dp-dow">${heads}</div>
+    <div class="dp-grid">${cells.join('')}</div>
+    <div class="dp-foot"><span class="dp-key"><i></i>${what}</span><button type="button" class="btn btn-sm btn-primary" data-dp-day="${today}">${ctx === 'log' || ctx === 'wk' ? 'This week' : 'Today'}</button></div>`;
+}
+function dpPlace() {
+  if (!dp) return;
+  const r = dp.btn.getBoundingClientRect(), w = dp.el.offsetWidth, vw = document.documentElement.clientWidth;
+  let left = r.left + r.width / 2 - w / 2;
+  left = Math.max(8, Math.min(left, vw - w - 8));
+  dp.el.style.left = (left + window.scrollX) + 'px';
+  dp.el.style.top = (r.bottom + window.scrollY + 8) + 'px';
+}
+function dpOpen(btn) {
+  if (dp && dp.btn === btn) return dpClose();
+  dpClose();
+  const ctx = dpContext(btn), sel = dpSelected(ctx), base = parseDate(sel.day || (ctx === 'log' || ctx === 'wk' ? (todayISO() >= sel.from && todayISO() <= sel.to ? todayISO() : sel.from) : todayISO()));
+  const el = document.createElement('div');
+  el.className = 'dp-pop'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Choose a day');
+  document.body.appendChild(el);
+  dp = { ctx, btn, y: base.getFullYear(), m: base.getMonth(), el };
+  btn.setAttribute('aria-expanded', 'true');
+  dpRender(); dpPlace();
+  const focus = el.querySelector('.dp-grid .on, .dp-grid .today') || el.querySelector('.dp-grid button');
+  if (focus) focus.focus({ preventScroll: true });
+}
+function dpClose() {
+  if (!dp) return;
+  dp.btn.setAttribute('aria-expanded', 'false');
+  dp.el.remove(); dp = null;
+}
+function dpPick(iso) {
+  const ctx = dp.ctx; dpClose();
+  if (ctx === 'heart') { saveJournal(); ui.hDate = iso; return renderView(); }
+  if (ctx === 'body') { ui.bDate = iso; resetFoodForm(); return renderView(); }
+  if (ctx === 'wk') {
+    ui.sumWeek = weekOffsetFor(iso);
+    const idx = weekDays(ui.sumWeek).findIndex(d => isoDate(d) === iso);
+    ui.plWeekKey = null; ui.plStartNext = Math.max(0, Math.min(4, idx - 1));
+    return renderWeekly();
+  }
+  ui.logWeek = weekOffsetFor(iso); renderLog();
+  const day = document.querySelector(`#view-log .day[data-day="${iso}"]`);
+  if (day) {
+    day.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    day.classList.remove('dp-flash'); void day.offsetWidth; day.classList.add('dp-flash');
+  } else if (iso !== todayISO()) toast(`Nothing logged on ${parseDate(iso).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}`);
+}
+function dpMarkButtons() {
+  document.querySelectorAll(DP_TRIGGERS).forEach(b => {
+    if (b.dataset.dpReady) return;
+    b.dataset.dpReady = '1';
+    b.classList.add('dp-btn');
+    b.setAttribute('aria-haspopup', 'dialog'); b.setAttribute('aria-expanded', 'false');
+    b.innerHTML = `${icon('calendar', 'sm')}<span>${b.textContent.trim()}</span><svg class="ic dp-caret" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>`;
+    b.title = 'Pick a day';
+  });
+}
+function bindDatePicker() {
+  dpMarkButtons();
+  document.addEventListener('click', e => {
+    const trig = e.target.closest(DP_TRIGGERS);
+    if (trig) { e.preventDefault(); e.stopImmediatePropagation(); return dpOpen(trig); }
+    if (!dp) return;
+    if (!dp.el.contains(e.target)) return dpClose();
+    e.stopImmediatePropagation();
+    const mo = e.target.closest('[data-dp-mo]');
+    if (mo) { let m = dp.m + Number(mo.dataset.dpMo), y = dp.y; if (m < 0) { m = 11; y--; } if (m > 11) { m = 0; y++; } dp.m = m; dp.y = y; return dpRender(); }
+    const day = e.target.closest('[data-dp-day]');
+    if (day) return dpPick(day.dataset.dpDay);
+  }, true);
+  document.addEventListener('keydown', e => {
+    if (!dp) return;
+    if (e.key === 'Escape') { e.stopPropagation(); const b = dp.btn; dpClose(); b.focus(); }
+    const cur = document.activeElement && document.activeElement.closest && document.activeElement.closest('.dp-grid [data-dp-day]');
+    const step = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 }[e.key];
+    if (cur && step) {
+      e.preventDefault();
+      const iso = addDaysIso(cur.dataset.dpDay, step), d = parseDate(iso);
+      if (d.getMonth() !== dp.m || d.getFullYear() !== dp.y) { dp.m = d.getMonth(); dp.y = d.getFullYear(); dpRender(); }
+      const next = dp.el.querySelector(`.dp-grid [data-dp-day="${iso}"]`); if (next) next.focus();
+    }
+  }, true);
+  window.addEventListener('resize', dpPlace);
+}
+
+/* ----------------------- Workouts on the Spirit timesheet ----------------------- */
+function bodyLifeTag() { return categories.find(c => /^body life\b/i.test(c)) || 'Body Life (BL)'; }
+// No start time given: for today, assume it just ended; otherwise leave it as a duration-only entry.
+function woAutoStart(date, minutes) {
+  if (date !== todayISO() || !minutes) return '';
+  const end = toMin(nowHM()), s = Math.max(0, end - minutes);
+  return `${pad(Math.floor(s / 60))}:${pad(s % 60)}`;
+}
+function woTagHint() {
+  const t = $('#wo-tag').value, mins = +$('#wo-min').value || 0;
+  $('#wo-tag-hint').textContent = !t ? 'Stays in Body only.'
+    : mins ? `Also logs ${fmtDur(mins)} on your Spirit timesheet and planner as ${t.replace(/\s*\([^)]*\)\s*$/, '')}.`
+    : `Add a duration to also log it on your Spirit timesheet as ${t.replace(/\s*\([^)]*\)\s*$/, '')}.`;
+}
+function workoutSummary(w) {
+  const bits = [];
+  if (w.distanceKm) bits.push(fmtDist(w.distanceKm, 2));
+  if (w.exercises && w.exercises.length) bits.push(w.exercises.map(x => x.name + (x.sets && x.reps ? ` ${x.sets}×${x.reps}` : '') + (x.weight ? ` @ ${x.weight} ${w.weightUnit || wU()}` : '')).join(', '));
+  if (w.feel && FEELS[w.feel]) bits.push(`Felt ${FEELS[w.feel].toLowerCase()}`);
+  if (w.notes) bits.push(w.notes);
+  return bits.join(' · ');
+}
+// Create, update or remove the timesheet entry that mirrors a workout.
+function syncWorkoutEntry(w) {
+  if (!w || w.kind !== 'workout' || isSample(w.id)) return;
+  const live = w.entryId && store[w.entryId] && !store[w.entryId].deleted ? store[w.entryId] : null;
+  if (!w.tag || !w.minutes) {
+    if (live) { localDelete(w.entryId); persistLocal(); renderAll(); }
+    return;
+  }
+  const tag = w.tag;
+  if (!categories.includes(tag)) categories.push(tag);
+  if (!lastCloudCategories.includes(tag)) queueOp({ type: 'categories', categories: [tag] });
+  const startTime = w.startTime || '', endTime = startTime ? (() => { const e = (toMin(startTime) + w.minutes) % 1440; return `${pad(Math.floor(e / 60))}:${pad(e % 60)}`; })() : '';
+  const id = w.entryId || ('entry_wo_' + w.id);
+  const base = live || store[id] || { id, createdAt: new Date().toISOString(), location: '', agenda: '', attendees: '' };
+  localUpsert({ ...base, id, date: w.date, subject: w.title || w.type, totalMinutes: w.minutes, tag,
+    description: workoutSummary(w), startTime, endTime });
+  if (w.entryId !== id) recPut({ ...w, entryId: id });
+  persistLocal();
+  renderAll();
+}
+
+/* ----------------------- Workouts to confirm (Body Life) ----------------------- */
+const isBodyTag = tag => !!tag && /^body life\b/i.test(tag);
+function guessWoType(title) {
+  const names = cfg().types.map(t => t.name), s = String(title || '').toLowerCase();
+  const direct = names.find(n => s.includes(n.toLowerCase())); if (direct) return direct;
+  const syn = [[/\b(run|jog|5k|10k|race)/, /run/i], [/\b(gym|lift|weights?|strength|workout)/, /strength|weight|lift|gym/i], [/\bwalk|hike/, /walk|hike/i],
+    [/\b(bike|cycl|spin)/, /bike|cycl/i], [/\bswim/, /swim/i], [/\b(yoga|stretch|mobility)/, /yoga|stretch|mobility/i]];
+  for (const [re, tre] of syn) if (re.test(s)) { const n = names.find(x => tre.test(x)); if (n) return n; }
+  return names[0];
+}
+function occWorkoutPrefill(o) {
+  const p = o.plan;
+  return { date: o.date, startTime: p.startTime, minutes: o.mins, title: p.title, type: guessWoType(p.title), tag: p.tag,
+    notes: [p.agenda, p.notes].filter(Boolean).join('\n\n'), entryId: o.entryId,
+    note: `<b>Planned:</b> ${esc(p.title)}, ${dayLabel(o.date)} ${fmtTime(p.startTime)} – ${fmtTime(p.endTime)}. Change anything that went differently, then save.` };
+}
+function entryWorkoutPrefill(e) {
+  return { date: e.date, startTime: e.startTime || '', minutes: e.totalMinutes, title: e.subject, type: guessWoType(e.subject), tag: e.tag,
+    notes: e.description || '', entryId: e.id,
+    note: `<b>From your timesheet:</b> ${esc(e.subject)}, ${dayLabel(e.date)}${e.startTime ? ' ' + fmtTime(e.startTime) : ''} · ${fmtDur(e.totalMinutes)}. Add what you did, then save.` };
+}
+// Body Life plans that have ended, and Body Life time entries with no workout yet (last 30 days).
+function workoutsToConfirm() {
+  const from = addDaysIso(todayISO(), -30), linked = new Set(recList('workout').map(w => w.entryId).filter(Boolean));
+  const ignore = new Set(cfg().woIgnore || []);
+  const occs = dueOccurrences().filter(o => isBodyTag(o.plan.tag)).map(o => ({ kind: 'plan', key: o.entryId, o, date: o.date, time: o.plan.startTime }));
+  const ents = realEntries().filter(e => isBodyTag(e.tag) && e.date >= from && !linked.has(e.id) && !ignore.has(e.id))
+    .map(e => ({ kind: 'entry', key: e.id, e, date: e.date, time: e.startTime || '' }));
+  return occs.concat(ents).sort((a, b) => b.date.localeCompare(a.date) || String(b.time).localeCompare(String(a.time)));
+}
+function renderBodyConfirm() {
+  const card = $('#bd-confirm'); if (!card) return;
+  const items = workoutsToConfirm();
+  ui.bcMap = {}; items.forEach(it => { ui.bcMap[it.key] = it; if (it.o) ui.occMap[it.key] = it.o; });
+  if (!items.length) { card.classList.add('hidden'); card.innerHTML = ''; return; }
+  card.innerHTML = `<div class="card-head"><h3 class="card-title">Workouts to confirm <span class="badge">${items.length}</span></h3></div>
+    <p class="hint" style="margin:0 0 6px">From your planner and timesheet (Body Life). Log what you actually did so your workout history stays true.</p>
+    ${items.slice(0, 6).map(it => {
+      const title = it.o ? it.o.plan.title : it.e.subject;
+      const when = it.o ? `${dayLabel(it.date)} · ${fmtTime(it.o.plan.startTime)} – ${fmtTime(it.o.plan.endTime)}` : `${dayLabel(it.date)}${it.e.startTime ? ' · ' + fmtTime(it.e.startTime) : ''} · ${fmtDur(it.e.totalMinutes)}`;
+      return `<div class="cf-row"><div style="min-width:0"><div class="cf-title">${esc(title)}</div>
+        <div class="cf-meta"><span>${when}</span><span class="chip" style="background:var(--surface-2)"><span>${it.o ? 'Planned' : 'Logged time'}</span></span></div></div>
+        <div class="cf-actions">
+          <button class="btn btn-sm btn-primary" data-bcf="log" data-key="${esc(it.key)}">${icon('check', 'sm')}<span>Log workout</span></button>
+          <button class="btn-icon danger" data-bcf="${it.o ? 'skip' : 'ignore'}" data-key="${esc(it.key)}" title="${it.o ? 'Didn’t happen' : 'Not a workout'}" aria-label="${it.o ? 'Didn’t happen' : 'Not a workout'}">${icon('x', 'sm')}</button>
+        </div></div>`;
+    }).join('')}
+    ${items.length > 6 ? `<p class="hint" style="margin:8px 0 0">${items.length - 6} more after these.</p>` : ''}`;
+  card.classList.remove('hidden');
+}
+function bindBodyConfirm() {
+  document.addEventListener('click', e => {
+    const b = e.target.closest('[data-bcf]'); if (!b) return;
+    const it = (ui.bcMap || {})[b.dataset.key]; if (!it) return;
+    if (b.dataset.bcf === 'log') return openWorkout(null, it.o ? occWorkoutPrefill(it.o) : entryWorkoutPrefill(it.e));
+    if (b.dataset.bcf === 'skip') return skipOcc(it.o);
+    if (b.dataset.bcf === 'ignore') { saveCfg({ woIgnore: Array.from(new Set([...(cfg().woIgnore || []), it.key])).slice(-200) }); renderView(); toast('Kept as time only.'); }
+  });
+}
+
 /* ============================ Start ============================ */
 function init() {
   loadLocalState();
@@ -5984,6 +6274,9 @@ function init() {
   bindEntryPopup();
   bindTour();
   bindLiving();
+  bindDatePicker();
+  bindBodyConfirm();
+  ['#wo-tag', '#wo-min'].forEach(s => $(s).addEventListener('input', woTagHint)); $('#wo-tag').addEventListener('change', woTagHint);
   renderTagOptions();
   resetFoodForm();
   resetForm();
