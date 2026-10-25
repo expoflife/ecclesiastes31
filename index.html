@@ -806,6 +806,25 @@ input, textarea, select { scroll-margin-top: 96px; scroll-margin-bottom: 120px; 
 .lens-tag.on { border-color: var(--c); background: color-mix(in srgb, var(--c) 15%, var(--surface)); color: var(--text); font-weight: 600; }
 .lens-tag.taken { opacity: .45; }
 
+/* Entry pop-up (from the planner) */
+.entry-dlg-body .form-card { position: static; border: 0; box-shadow: none; border-radius: 0; padding: 4px 24px 24px; background: transparent; }
+.entry-dlg-body #form-title { display: none; }
+.entry-dlg-body .form-card .card-head { justify-content: flex-start; }
+@media (max-width: 560px) { .entry-dlg-body .form-card { padding: 4px 18px 20px; } }
+
+/* Guided tour */
+#tour { position: fixed; inset: 0; z-index: 90; }
+#tour .tour-catch { position: absolute; inset: 0; }
+#tour-spot { position: fixed; border-radius: 14px; box-shadow: 0 0 0 9999px rgba(20, 19, 16, .58); outline: 2px solid rgba(255, 255, 255, .85); outline-offset: 2px; pointer-events: none; transition: top .3s ease, left .3s ease, width .3s ease, height .3s ease; }
+#tour-bubble { position: fixed; z-index: 91; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow-lg); padding: 16px 18px; transition: top .3s ease, left .3s ease; }
+#tour-bubble h3 { margin: 2px 0 6px; font-family: var(--serif); font-size: 20px; font-weight: 600; }
+#tour-bubble p { margin: 0; font-size: 14px; line-height: 1.55; color: var(--muted); }
+.tour-count { font-size: 11.5px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--accent); }
+.tour-actions { display: flex; align-items: center; gap: 8px; margin-top: 14px; flex-wrap: wrap; justify-content: flex-end; }
+.tour-skip { border: 0; background: none; color: var(--faint); font-size: 13px; padding: 6px 2px; }
+.tour-skip:hover { color: var(--text); }
+@media (prefers-reduced-motion: reduce) { #tour-spot, #tour-bubble { transition: none; } }
+
 /* Each conscience step shows its verse */
 .scale button { align-items: flex-start; padding: 9px 12px; }
 .scale button i { margin-top: 2px; }
@@ -884,8 +903,9 @@ input, textarea, select { scroll-margin-top: 96px; scroll-margin-bottom: 120px; 
 </header>
 
 <div class="sample-bar hidden" id="sample-bar" role="status">
-  <span>Showing sample data so you can explore. Nothing is saved, synced or added to your calendar.</span>
-  <button class="btn btn-sm" id="sample-hide">Hide sample data</button>
+  <span id="sample-text">Showing sample data. Nothing is saved, synced or added to your calendar.</span>
+  <button class="btn btn-sm hidden" id="tour-replay">Replay the tour</button>
+  <button class="btn btn-sm" id="sample-hide">Turn off tour mode</button>
 </div>
 
 <main>
@@ -1185,11 +1205,11 @@ input, textarea, select { scroll-margin-top: 96px; scroll-margin-bottom: 120px; 
       <button class="btn-icon" data-close aria-label="Close"><svg class="ic"><use href="#i-x"/></svg></button>
     </div>
 
-    <section class="set-sec">
-      <h3>Sample data</h3>
+    <section class="set-sec" id="sec-tour">
+      <h3>Tour mode</h3>
       <div class="switch-row">
-        <div class="sw-text"><b>Show sample data</b><span>Fills Spirit with about 16 weeks of random example activities, and Heart and Body with six weeks of example readings, journal days, meals, workouts and a 10K plan, so you can see how everything looks. It’s a preview only: it is never saved to your Google Sheet or added to your calendars, and your real data stays untouched.</span></div>
-        <label class="switch"><input type="checkbox" id="set-sample" aria-label="Show sample data"><i></i></label>
+        <div class="sw-text"><b>Tour mode</b><span>Walks you through Spirit, Heart and Body one feature at a time, with sample data filling every screen. It stays on afterward so you can explore freely; nothing is saved, synced or added to your calendar. Switch it off when you’re done, and back on any time you want a refresher.</span></div>
+        <label class="switch"><input type="checkbox" id="set-tour" aria-label="Tour mode"><i></i></label>
       </div>
     </section>
 
@@ -1454,6 +1474,19 @@ input, textarea, select { scroll-margin-top: 96px; scroll-margin-bottom: 120px; 
     <div class="plan-form" id="lens-body"></div>
   </div>
 </dialog>
+
+<dialog id="entry-dlg" class="sheet" aria-labelledby="entry-dlg-title">
+  <div class="sheet-inner">
+    <div class="sheet-head"><h2 class="sheet-title" id="entry-dlg-title">Log activity</h2><button class="btn-icon" data-close aria-label="Close"><svg class="ic"><use href="#i-x"/></svg></button></div>
+    <div class="entry-dlg-body" id="entry-dlg-body"></div>
+  </div>
+</dialog>
+
+<div id="tour" class="hidden" role="dialog" aria-modal="true" aria-label="Guided tour">
+  <div class="tour-catch"></div>
+  <div id="tour-spot"></div>
+  <div id="tour-bubble"></div>
+</div>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
@@ -2381,7 +2414,7 @@ function buildSampleEntries() {
       if (s + mins > 1435 || busy.some(([a, b]) => s < b && s + mins > a)) return;   // keep the day realistic: no overlaps
       if (back === 0 && s + mins > nowMin) return;                // nothing in the future today
       busy.push([s, s + mins]);
-      out.push({ id: `sample_${isoDate(d)}_${hm(s).replace(':', '')}_${out.length}`, date: isoDate(d), subject: (sj = k.subj()), description: k.note(), attendees: ((sj.match(/ with (.+)$/) || [])[1] || '').split(' & ').join(', '),
+      out.push({ id: `sample_${isoDate(d)}_${hm(s).replace(':', '')}_${out.length}`, date: isoDate(d), subject: (sj = k.subj()), description: k.note(), attendees: ((sj.match(/ with (.+)$/) || [])[1] || '').split(' & ').filter(n => !/^the Lord$/i.test(n)).join(', '),
                  totalMinutes: mins, tag: pick(k.code, i), startTime: hm(s), endTime: hm(s + mins), location: k.loc ? k.loc() : '', agenda: k.agenda ? k.agenda() : '', createdAt: '2026-01-01T00:00:00.000Z' });
     });
   }
@@ -2393,7 +2426,7 @@ function setSample(on) {
   sampleRecs = sampleOn ? buildSampleRecs() : [];
   rebuildEntries();
   $('#sample-bar').classList.toggle('hidden', !sampleOn);
-  $('#set-sample').checked = sampleOn;
+  if (typeof renderTourBar === 'function' && $('#sample-text')) renderTourBar();
   renderAll();
 }
 const now0 = new Date();
@@ -2869,6 +2902,7 @@ function handleSave(ev) {
   // Jump the log to the week of the saved entry so it's visible.
   ui.logWeek = weekOffsetFor(date);
   resetForm();
+  if ($('#entry-dlg').open) $('#entry-dlg').close();
   renderAll();
   syncNow();
 }
@@ -2881,7 +2915,7 @@ function editEntry(id) {
   if (isSample(id)) return toast('That’s a sample entry. Hide sample data in Settings to get back to your own.', true);
   const en = store[id];
   if (!en || en.deleted) return;
-  if (ui.view !== 'log') setView('log');
+  const pop = ui.view !== 'log';
   ui.editingId = id;
   $('#f-date').value = en.date;
   $('#f-subject').value = en.subject || '';
@@ -2901,7 +2935,7 @@ function editEntry(id) {
   $('#f-cancel').classList.remove('hidden');
   const form = $('#entry-form');
   form.classList.add('editing');
-  form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (pop) openEntryPopup(); else form.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 async function deleteEntry(id) {
   if (isSample(id)) return toast('Sample entries aren’t saved, so there’s nothing to delete.', true);
@@ -3195,7 +3229,7 @@ function confirmAll() {
 }
 function adjustOcc(o) {
   const p = o.plan;
-  if (ui.view !== 'log') setView('log');
+  const pop = ui.view !== 'log';
   resetForm();
   ui.planEntryId = o.entryId;
   $('#f-date').value = o.date;
@@ -3213,7 +3247,7 @@ function adjustOcc(o) {
   $('#f-cancel').classList.remove('hidden');
   const form = $('#entry-form');
   form.classList.add('editing');
-  form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (pop) openEntryPopup(); else form.scrollIntoView({ behavior: 'smooth', block: 'start' });
   if (!p.tag) toast('Choose a tag, then tap Log it.', true);
 }
 function skipOcc(o, label = 'Marked as didn’t happen.') {
@@ -3459,6 +3493,7 @@ function openSettings(highlightSync = false) {
   applyGoal(); $('#set-goal').value = WEEKLY_GOAL_HOURS;
   $('#set-url').value = getScriptUrl();
   $('#sec-sync').classList.toggle('highlight', !!highlightSync);
+  $('#sec-tour').classList.toggle('highlight', !isConfigured() && lsRaw(TOUR_KEY) !== '1');
   renderTagManager();
   renderBodySettings();
   refreshSyncUI();
@@ -3754,7 +3789,9 @@ function bindEvents() {
       const start = Math.min(PLAN_START + Math.max(0, Math.floor(y / PLAN_HOUR_PX * 4)) * 15, PLAN_END - 15);
       const end = Math.min(start + 60, PLAN_END - 1);
       const hm = m => `${pad(Math.floor(m / 60))}:${pad(m % 60)}`;
-      openPlanForm(null, { date: col.dataset.date, start: hm(start), end: hm(end) });
+      const slotEnd = new Date(parseDate(col.dataset.date).getTime() + start * 60000);
+      if (slotEnd < new Date()) newEntryAt(col.dataset.date, hm(start), hm(end));
+      else openPlanForm(null, { date: col.dataset.date, start: hm(start), end: hm(end) });
       return;
     }
     const cf = e.target.closest('[data-cf]');
@@ -3813,8 +3850,6 @@ function bindEvents() {
   $('#set-save-conn').addEventListener('click', saveConnection);
   $('#set-copy-script').addEventListener('click', copyBackendScript);
   $('#set-weekstart').addEventListener('change', e => setWeekStart(e.target.value));
-  $('#set-sample').addEventListener('change', e => { setSample(e.target.checked); toast(e.target.checked ? 'Sample data is showing. Nothing is saved.' : 'Sample data hidden.'); });
-  $('#sample-hide').addEventListener('click', () => { setSample(false); toast('Sample data hidden.'); });
   $('#set-autolog').addEventListener('change', e => {
     const on = e.target.checked;
     opQueue = opQueue.filter(o => o.type !== 'setting');
@@ -3999,7 +4034,7 @@ function goRealm(r) { const m = lsGet(REALM_VIEW_KEY, {}) || {}; setView(m[r] &&
 function renderRealmNav() {
   const realm = realmOf(ui.view);
   document.documentElement.dataset.realm = realm;
-  $$('[data-realm]').forEach(b => {
+  $$('button[data-realm]').forEach(b => {
     const on = b.dataset.realm === realm;
     b.classList.toggle('on', on);
     if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
@@ -4849,7 +4884,7 @@ function buildSampleRecs() {
 /* ---------------------------- Events ---------------------------- */
 function bindHeartBody() {
   document.addEventListener('click', e => {
-    const el = e.target.closest('[data-realm],[data-dnav],[data-level],[data-delrec],[data-hday],[data-hrange],[data-brange],[data-editmeal],[data-favadd],[data-favdel],[data-logwo],[data-logsession],[data-editwo],[data-whtype],[data-open-update],[data-open-health],[data-ck],[data-feel],[data-exdel],[data-typedel],#tp-setup');
+    const el = e.target.closest('button[data-realm],[data-dnav],[data-level],[data-delrec],[data-hday],[data-hrange],[data-brange],[data-editmeal],[data-favadd],[data-favdel],[data-logwo],[data-logsession],[data-editwo],[data-whtype],[data-open-update],[data-open-health],[data-ck],[data-feel],[data-exdel],[data-typedel],#tp-setup');
     if (!el) return;
     const ds = el.dataset;
     if (ds.realm) return goRealm(ds.realm);
@@ -5220,7 +5255,17 @@ function bindV34() {
 const LENS_KEY = 'ts_chart_view_v1';
 const LENS_HEX = {};
 const LENS_PALETTE = ['#0d9488', '#7c3aed', '#ea580c', '#2563eb', '#db2777', '#65a30d', '#ca8a04', '#0891b2'];
-const chartViews = () => Array.isArray(cfg().chartViews) ? cfg().chartViews : [];
+const realChartViews = () => Array.isArray(cfg().chartViews) ? cfg().chartViews : [];
+// In Tour mode (sample data) a sample view is offered too; it's never saved.
+function sampleChartViews() {
+  const t = c => findTag(c);
+  return [{ id: 'sample_view', name: 'Truth Pursuit (sample)', sample: true, rest: 'other', groups: [
+    { name: 'Truth Pursuit', tags: [t('TP'), t('CW')].filter(Boolean) },
+    { name: 'Shepherding', tags: [t('MS'), t('VG')].filter(Boolean) },
+    { name: 'Meetings', tags: [t('LD'), t('PM'), t('CM')].filter(Boolean) }
+  ].filter(g => g.tags.length) }];
+}
+const chartViews = () => sampleOn ? realChartViews().concat(sampleChartViews()) : realChartViews();
 const activeLens = () => chartViews().find(v => v.id === lsRaw(LENS_KEY)) || null;
 // Returns the entries as the chosen view sees them: each grouped tag is renamed to its group.
 function lens(list) {
@@ -5287,16 +5332,16 @@ function openLensManager() {
   $('#lens-dlg-title').textContent = 'Chart views';
   $('#lens-body').innerHTML = `<p class="hint" style="font-size:13px;color:var(--muted)">Group tags for the Weekly, Monthly and Annual charts. Your tags and entries don’t change.</p>
     <div class="tag-list">${views.map(v => `<div class="tag-row"><span class="name">${esc(v.name)}</span>
-      <span class="count">${plural(v.groups.length, 'group', 'groups')}</span>
-      <button class="btn-icon" data-lens-edit="${esc(v.id)}" aria-label="Edit ${esc(v.name)}">${icon('pencil', 'sm')}</button></div>`).join('')}</div>
+      <span class="count">${v.sample ? 'Sample' : plural(v.groups.length, 'group', 'groups')}</span>
+      ${v.sample ? '' : `<button class="btn-icon" data-lens-edit="${esc(v.id)}" aria-label="Edit ${esc(v.name)}">${icon('pencil', 'sm')}</button>`}</div>`).join('')}</div>
     <div class="btn-row"><button class="btn btn-primary" data-lens-new>${icon('plus', 'sm')}New view</button></div>`;
   const d = $('#lens-dlg'); if (!d.open) d.showModal();
 }
 function editLens(id) {
-  const v = chartViews().find(x => x.id === id);
+  const v = realChartViews().find(x => x.id === id);
   const tp = findTag('TP'), br = categories.find(c => /bible reading/i.test(c));
   ui.lensEdit = v ? JSON.parse(JSON.stringify(v)) : {
-    id: 'v' + Date.now().toString(36), name: chartViews().length ? 'New view' : 'Truth Pursuit',
+    id: 'v' + Date.now().toString(36), name: realChartViews().length ? 'New view' : 'Truth Pursuit',
     groups: [{ name: tp ? tagSubject(tp) : 'Group 1', tags: [tp, br].filter(Boolean) }], rest: 'separate'
   };
   ui.lensIsNew = !v;
@@ -5339,8 +5384,8 @@ function saveLens() {
   if (!L.name) return toast('Name the view first.', true);
   if (!L.groups.length) return toast('Add at least one group with a tag in it.', true);
   if (new Set(L.groups.map(g => g.name.toLowerCase())).size !== L.groups.length) return toast('Give each group a different name.', true);
-  const views = chartViews().filter(v => v.id !== L.id);
-  const i = chartViews().findIndex(v => v.id === L.id);
+  const views = realChartViews().filter(v => v.id !== L.id);
+  const i = realChartViews().findIndex(v => v.id === L.id);
   if (i >= 0) views.splice(i, 0, L); else views.push(L);
   saveCfg({ chartViews: views });
   lsRawSet(LENS_KEY, L.id);
@@ -5351,7 +5396,7 @@ async function deleteLens() {
   const L = ui.lensEdit;
   const ok = await ask({ title: `Delete “${L.name}”?`, message: 'Only this chart view is removed. Your tags and entries stay as they are.', confirmText: 'Delete view', danger: true });
   if (!ok) return;
-  saveCfg({ chartViews: chartViews().filter(v => v.id !== L.id) });
+  saveCfg({ chartViews: realChartViews().filter(v => v.id !== L.id) });
   if (lsRaw(LENS_KEY) === L.id) lsRawSet(LENS_KEY, '');
   $('#lens-dlg').close(); renderView(); toast('Chart view deleted.');
 }
@@ -5380,6 +5425,176 @@ function bindLens() {
   d.addEventListener('click', e => { if (e.target === d || e.target.closest('[data-close]')) d.close(); });
 }
 
+/* ---------- Entry pop-up ----------
+   The Daily log form is moved into a pop-up while it's open, then put back. */
+let entryHome = null;
+function openEntryPopup() {
+  const form = $('#entry-form'), d = $('#entry-dlg');
+  if (!entryHome) entryHome = { parent: form.parentNode, next: form.nextSibling };
+  $('#entry-dlg-title').textContent = $('#form-title').textContent;
+  $('#entry-dlg-body').appendChild(form);
+  $('#f-cancel').classList.remove('hidden');
+  if (!d.open) d.showModal();
+}
+function newEntryAt(date, start, end) {
+  resetForm();
+  $('#f-date').value = date; $('#f-start').value = start; $('#f-end').value = end;
+  setMode('times'); updateCalc();
+  $('#form-title').textContent = 'Log activity';
+  openEntryPopup();
+  setTimeout(() => $('#f-subject').focus({ preventScroll: true }), 60);
+}
+function bindEntryPopup() {
+  const d = $('#entry-dlg');
+  d.addEventListener('click', e => { if (e.target === d || e.target.closest('[data-close]')) d.close(); });
+  d.addEventListener('close', () => {
+    const form = $('#entry-form');
+    if (entryHome && form.parentNode !== entryHome.parent) entryHome.parent.insertBefore(form, entryHome.next);
+    resetForm();
+  });
+  $('#f-cancel').addEventListener('click', () => { if (d.open) d.close(); });
+}
+
+/* =====================================================================
+   v3.7: Guided tour. Sample data fills the screens while a spotlight
+   walks through each feature. Started from Settings › Tutorial.
+   ===================================================================== */
+const TOUR_KEY = 'ts_tour_done_v1', TOUR_MODE_KEY = 'ts_tour_mode_v1';
+let tourMode = false;
+const TOUR = [
+  { title: 'Welcome to Ecclesiastes 3:1', text: '“For everything there is a season.” This app helps you see how your time is spent in three parts of your life: Spirit, Heart and Body. Sample data is filling the screens for this tour; none of it is saved.' },
+  { view: 'log', target: ['.bottombar', '.tabs'], title: 'Spirit, Heart and Body', text: 'Switch between the three parts here. Each has its own color and its own pages, shown as chips at the top of the screen.' },
+  { view: 'log', target: '#verse', title: 'A verse for today', text: 'Each page shows a short verse from the Recovery Version that changes daily. Tap “Another” for a different one.' },
+  { view: 'log', target: '#entry-form', title: 'Log your time', text: 'Pick a tag and the subject fills itself in. Add who was there (names are remembered for next time), a place or Zoom link, and any agenda or notes.' },
+  { view: 'log', target: '.toolbar', title: 'Your week', text: 'Everything you logged this week, labeled by week of the month. Use the arrows to look back, or search by subject, person or tag.' },
+  { view: 'weekly', target: '.plant-stat', title: 'Your weekly goal grows', text: 'As hours add up, the plant sprouts, leafs out, buds and blooms. Set your own weekly goal in Settings › Preferences.' },
+  { view: 'weekly', target: '.lens-bar', before: () => lsRawSet(LENS_KEY, ''), title: 'Chart views', text: 'Group tags for the charts only, such as Bible reading and Campus Work under “Truth Pursuit”. Your tags never change. A sample view is here for the tour; make your own with “Edit views”.' },
+  { view: 'weekly', target: '.grid-2:has(#wk-pie)', before: () => lsRawSet(LENS_KEY, 'sample_view'), title: 'A sample view in action', text: 'With “Truth Pursuit (sample)” chosen, Truth Pursuit and Campus Work count together, so do the shepherding and meeting tags, and everything else becomes “Other”. The pie and the daily bars both follow the view.' },
+  { view: 'monthly', target: '.card:has(#mo-accum)', before: () => lsRawSet(LENS_KEY, 'sample_view'), title: 'Hours adding up', text: 'Monthly and Annual show how each group’s hours accumulate. Tap “By tag” any time to go back to the normal view.' },
+  { view: 'weekly', target: '.planner-scroll', title: 'The weekly planner', text: 'Tap an empty time in the past to log it, or in the future to make a plan. Plans can repeat weekly and appear in your Google Calendar, with a Join button for Zoom links.' },
+  { view: 'annual', target: '.track.lg', title: 'The year at a glance', text: 'Your yearly outlook grows like a vine toward your goal. Monthly and Annual pages also show accumulated hours as line charts.' },
+  { view: 'heart', target: '.journal-card', title: 'Heart journal', text: 'A new question each day for your dealings, what God is operating, and what He is calling out in you, with an example under each. Write only as you sense to.' },
+  { view: 'heart', target: '#hc-scale', title: 'Your conscience', text: 'From Dirty Feet to Enjoyment, each step with its verse. Take a reading as often as you like, for example before and after you confess.' },
+  { view: 'heart-trends', target: '#ht-chart', title: 'Heart trends', text: 'See your readings next to your time walking with the Lord. Choose which tags count as “Walking with the Lord” in Settings › Tags.' },
+  { view: 'body', target: '#bd-stats', title: 'Body: today', text: 'Track carbs, protein and fat against your own targets. Save foods you eat often as one-tap favorites, and do a quick daily check-in.' },
+  { view: 'training', target: '#tp-body', title: 'A training plan that adapts', text: 'Set a goal like a 10K and a race date. The plan builds week by week and adjusts to how each run felt, your soreness and your sleep.' },
+  { view: 'log', target: '#sync-btn', title: 'Sync', text: 'Shows whether your entries are saved to your Google Sheet. Tap it to sync now. Everything is kept on your device too, even offline.' },
+  { view: 'log', target: '#settings-btn', title: 'Settings & data', text: 'Connect your Google Sheet, manage tags, set your goals and units, and export a backup. You can take this tour again from here any time.' },
+  { last: true, title: 'Look around at your own pace', text: 'Tour mode stays on, so you can wander through the sample data as long as you like; nothing you do here is kept. When you’ve seen enough, switch it off from the bar at the top or in Settings, and switch it back on whenever you’d like a refresher.' }
+];
+let tourI = -1, tourHadSample = false, tourEl = null;
+const visibleEl = sel => [].concat(sel).map(s => $$(s).find(el => el.offsetParent !== null || el.getClientRects().length)).find(Boolean) || null;
+
+function setTourMode(on, walk = on) {
+  tourMode = !!on;
+  lsRawSet(TOUR_MODE_KEY, tourMode ? '1' : '');
+  const sw = $('#set-tour'); if (sw) sw.checked = tourMode;
+  if (tourMode) { if (!sampleOn) setSample(true); if (walk) startTour(); }
+  else {
+    if (tourI >= 0) closeWalkthrough();
+    if (sampleOn) setSample(false);
+    lsRawSet(TOUR_KEY, '1');
+    if (!isConfigured()) openSettings(true);
+    else toast('Tour mode is off. Turn it back on in Settings any time.');
+  }
+  renderTourBar();
+}
+function renderTourBar() {
+  const bar = $('#sample-bar');
+  bar.classList.toggle('hidden', !sampleOn || tourI >= 0);
+  $('#sample-text').textContent = tourMode ? 'Tour mode is on. You’re looking at sample data; nothing here is saved or synced.' : 'Showing sample data. Nothing is saved, synced or added to your calendar.';
+  $('#tour-replay').classList.toggle('hidden', !tourMode);
+}
+function startTour() {
+  if ($('#settings').open) $('#settings').close();
+  tourHadSample = true;
+  $('#sample-bar').classList.add('hidden');
+  $('#tour').classList.remove('hidden');
+  document.addEventListener('keydown', tourKeys);
+  showTourStep(0);
+}
+function closeWalkthrough() {
+  tourI = -1; tourEl = null;
+  $('#tour').classList.add('hidden');
+  document.removeEventListener('keydown', tourKeys);
+  lsRawSet(TOUR_KEY, '1');
+}
+// Ending the walkthrough keeps Tour mode (and its sample data) on until it's switched off.
+function endTour() {
+  closeWalkthrough();
+  renderTourBar();
+  setView('log'); window.scrollTo({ top: 0 });
+}
+function tourKeys(e) {
+  if (e.key === 'Escape') endTour();
+  else if (e.key === 'ArrowRight') showTourStep(Math.min(TOUR.length - 1, tourI + 1));
+  else if (e.key === 'ArrowLeft') showTourStep(Math.max(0, tourI - 1));
+}
+function showTourStep(i) {
+  tourI = i;
+  const st = TOUR[i];
+  if (st.before) st.before();
+  if (st.view && ui.view !== st.view) setView(st.view);
+  else if (st.before) renderView();
+  tourEl = st.target ? visibleEl(st.target) : null;
+  if (tourEl) {
+    const r = tourEl.getBoundingClientRect(), fits = r.height < innerHeight * .55;
+    window.scrollTo({ top: Math.max(0, window.scrollY + r.top - (fits ? (innerHeight - r.height) / 2 - 60 : 90)) });
+  } else window.scrollTo({ top: 0 });
+  const b = $('#tour-bubble');
+  b.innerHTML = `<div class="tour-count">${i + 1} of ${TOUR.length}</div><h3>${esc(st.title)}</h3><p>${esc(st.text)}</p>
+    <div class="tour-actions">${st.last
+      ? `<button class="btn btn-sm" data-tour="off">Turn off tour mode</button><button class="btn btn-sm btn-primary" data-tour="keep">Keep exploring</button>`
+      : `<button class="tour-skip" data-tour="skip">Skip tour</button><span style="flex:1"></span>${i ? '<button class="btn btn-sm" data-tour="back">Back</button>' : ''}<button class="btn btn-sm btn-primary" data-tour="next">${i ? 'Next' : 'Show me around'}</button>`}</div>`;
+  requestAnimationFrame(placeTour);
+  setTimeout(placeTour, 300);
+}
+function placeTour() {
+  if (tourI < 0) return;
+  const spot = $('#tour-spot'), b = $('#tour-bubble'), pad = 8, phone = innerWidth <= 560;
+  const bw = Math.min(380, innerWidth - 24);
+  b.style.width = bw + 'px';
+  if (!tourEl) {
+    Object.assign(spot.style, { top: innerHeight / 2 + 'px', left: innerWidth / 2 + 'px', width: '0px', height: '0px' });
+    Object.assign(b.style, { left: (innerWidth - bw) / 2 + 'px', top: Math.max(16, (innerHeight - b.offsetHeight) / 2) + 'px' });
+    return;
+  }
+  const r = tourEl.getBoundingClientRect();
+  const top = Math.max(6, r.top - pad), left = Math.max(6, r.left - pad);
+  const bottom = Math.min(innerHeight - 6, r.bottom + pad), right = Math.min(innerWidth - 6, r.right + pad);
+  Object.assign(spot.style, { top: top + 'px', left: left + 'px', width: Math.max(0, right - left) + 'px', height: Math.max(0, bottom - top) + 'px' });
+  const bh = b.offsetHeight, below = innerHeight - bottom, above = top;
+  let bt;
+  if (below >= bh + 16) bt = bottom + 12;
+  else if (above >= bh + 16) bt = top - bh - 12;
+  else bt = phone ? innerHeight - bh - 12 : Math.max(12, innerHeight - bh - 16);
+  let bl = phone ? (innerWidth - bw) / 2 : Math.min(Math.max(12, left), innerWidth - bw - 12);
+  if (!phone && below < bh + 16 && above < bh + 16) {          // tall feature: put the note beside it
+    const mid = Math.min(Math.max(12, (top + bottom) / 2 - bh / 2), innerHeight - bh - 12);
+    if (innerWidth - right >= bw + 24) { bl = right + 14; bt = mid; }
+    else if (left >= bw + 24) { bl = left - bw - 14; bt = mid; }
+  }
+  Object.assign(b.style, { top: bt + 'px', left: bl + 'px' });
+}
+function bindTour() {
+  $('#set-tour').addEventListener('change', e => setTourMode(e.target.checked));
+  $('#tour-replay').addEventListener('click', startTour);
+  $('#sample-hide').addEventListener('click', () => { if (tourMode) setTourMode(false); else { setSample(false); renderTourBar(); toast('Sample data hidden.'); } });
+  $('#tour').addEventListener('click', e => {
+    const a = e.target.closest('[data-tour]'); if (!a) return;
+    const act = a.dataset.tour;
+    if (act === 'next') showTourStep(Math.min(TOUR.length - 1, tourI + 1));
+    else if (act === 'back') showTourStep(Math.max(0, tourI - 1));
+    else if (act === 'skip' || act === 'keep') endTour();
+    else if (act === 'off') { closeWalkthrough(); setTourMode(false); setView('log'); window.scrollTo({ top: 0 }); }
+  });
+  window.addEventListener('resize', placeTour);
+  window.addEventListener('scroll', placeTour, { passive: true });
+}
+
+// Tour mode survives a reload until it's switched off.
+function restoreTourMode() { if (lsRaw(TOUR_MODE_KEY) === '1') { tourMode = true; $('#set-tour').checked = true; if (!sampleOn) setSample(true); renderTourBar(); } }
+
 /* ============================ Start ============================ */
 function init() {
   loadLocalState();
@@ -5390,6 +5605,8 @@ function init() {
   bindAttendees();
   bindV34();
   bindLens();
+  bindEntryPopup();
+  bindTour();
   renderTagOptions();
   resetFoodForm();
   resetForm();
@@ -5397,6 +5614,7 @@ function init() {
   setView(lsRaw(VIEW_KEY) || 'log', false);
   updateBadges();
   startAutoSync();
+  restoreTourMode();
 }
 init();
 </script>
